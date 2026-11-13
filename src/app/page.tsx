@@ -3,7 +3,7 @@ import { SystemStatus } from '@/components/system-status'
 import { seedWeddings } from '@/mocks/invitations'
 import { TEMPLATES } from '@/templates'
 
-// Trang chủ tạm (Phase 2): link tới các thiệp mẫu đã seed vào DB (npm run db:seed)
+// Trang chủ tạm (tới Phase 7 làm landing): link vào dashboard và các thiệp mẫu đã seed
 export default function Home() {
   const templates = Object.values(TEMPLATES)
 
@@ -12,6 +12,12 @@ export default function Home() {
       <div>
         <h1 className="text-4xl font-semibold text-rose-700">Thiệp Hồng</h1>
         <p className="mt-2 text-muted-foreground">Nền tảng thiệp cưới online — đang xây dựng</p>
+        <Link
+          href="/dashboard"
+          className="mt-6 inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/85"
+        >
+          Tạo / quản lý thiệp của bạn
+        </Link>
       </div>
 
       <section className="w-full max-w-xl text-left">

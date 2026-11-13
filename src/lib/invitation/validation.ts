@@ -11,6 +11,8 @@ export const RESERVED_SLUGS = new Set([
   'dashboard',
   'login',
   'logout',
+  'invite',
+  'preview',
   'static',
   'assets',
   'favicon.ico',

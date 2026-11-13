@@ -9,7 +9,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
+  --font-display: var(--font-display);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,39 +51,44 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Bảng màu giao diện quản lý Thiệp Hồng (template thiệp dùng bảng màu riêng) */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --background: #f8f5f6;
+  --foreground: #26161d;
+  --card: #ffffff;
+  --card-foreground: #26161d;
+  --popover: #ffffff;
+  --popover-foreground: #26161d;
+  /* Son thắm: màu chữ hỷ trên thiệp đỏ */
+  --primary: #a8234a;
+  --primary-foreground: #fff7f8;
+  --secondary: #f1e9ec;
+  --secondary-foreground: #3a2530;
+  --muted: #f1ebee;
+  --muted-foreground: #6c5861;
+  --accent: #f6e4e9;
+  --accent-foreground: #7a1736;
+  --destructive: #c0392b;
+  --border: #e7dde1;
+  --input: #d9cbd1;
+  --ring: #a8234a;
+  /* Vàng kim: trạng thái đã gửi thiệp */
+  --gold: #8f6519;
+  --gold-soft: #f6ecd8;
+  --chart-1: #a8234a;
+  --chart-2: #8f6519;
+  --chart-3: #6c5861;
+  --chart-4: #d9cbd1;
+  --chart-5: #26161d;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #fbf9fa;
+  --sidebar-foreground: #26161d;
+  --sidebar-primary: #a8234a;
+  --sidebar-primary-foreground: #fff7f8;
+  --sidebar-accent: #f1e9ec;
+  --sidebar-accent-foreground: #3a2530;
+  --sidebar-border: #e7dde1;
+  --sidebar-ring: #a8234a;
 }
 
 .dark {

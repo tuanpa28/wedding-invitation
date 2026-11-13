@@ -1,6 +1,6 @@
 import { Leaf } from 'lucide-react'
 import { Dancing_Script, Quicksand } from 'next/font/google'
-import Image from 'next/image'
+import { WeddingImage as Image } from '@/components/invitation/wedding-image'
 import type { CSSProperties, ReactNode } from 'react'
 import { Album } from '@/components/invitation/album'
 import { Countdown } from '@/components/invitation/countdown'

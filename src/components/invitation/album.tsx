@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
-import Image from 'next/image'
+import { WeddingImage as Image } from '@/components/invitation/wedding-image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Photo } from '@/lib/invitation/types'
 import { cn } from '@/lib/utils'

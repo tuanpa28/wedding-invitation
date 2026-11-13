@@ -5,6 +5,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -12,6 +13,9 @@ import {
 } from 'drizzle-orm/pg-core'
 // Chỉ import kiểu (bị xoá khi build) → drizzle-kit/seed không cần alias '@/'
 import type { Person, Photo, TemplateId } from '../../lib/invitation/types'
+import { user } from './auth-schema'
+
+export * from './auth-schema'
 
 // ---------------------------------------------------------------------------
 // Enum
@@ -27,6 +31,8 @@ export const eventType = pgEnum('event_type', [
   'tiec_cuoi',
   'khac',
 ])
+/** owner: tạo thiệp, quản lý thành viên, xoá thiệp. editor: sửa nội dung, publish. */
+export const memberRole = pgEnum('member_role', ['owner', 'editor'])
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -49,7 +55,8 @@ export const weddings = pgTable('weddings', {
   groom: jsonb('groom').$type<Person>().notNull(),
   bride: jsonb('bride').$type<Person>().notNull(),
   quote: text('quote'),
-  cover: jsonb('cover').$type<Photo>().notNull(),
+  /** Ảnh bìa; null → dùng ảnh bìa mặc định */
+  cover: jsonb('cover').$type<Photo>(),
   musicUrl: text('music_url'),
   /** Màu, font, bật/tắt section (Phase 7) */
   theme: jsonb('theme').$type<Record<string, unknown>>().notNull().default({}),
@@ -97,7 +104,7 @@ export const storyItems = pgTable(
   (t) => [index('story_items_wedding_id_idx').on(t.weddingId)],
 )
 
-/** Ảnh album. Từ Phase 3 thêm cloudinary_public_id khi upload thật. */
+/** Ảnh album. public_id có khi ảnh upload lên Cloudinary. */
 export const photos = pgTable(
   'photos',
   {
@@ -109,6 +116,7 @@ export const photos = pgTable(
     width: integer('width').notNull(),
     height: integer('height').notNull(),
     alt: text('alt').notNull().default(''),
+    publicId: text('public_id'),
     sort: integer('sort').notNull().default(0),
     ...timestamps,
   },
@@ -136,6 +144,43 @@ export const guests = pgTable(
   (t) => [uniqueIndex('guests_wedding_code_uq').on(t.weddingId, t.code)],
 )
 
+/** Ai được quản lý thiệp nào */
+export const weddingMembers = pgTable(
+  'wedding_members',
+  {
+    weddingId: uuid('wedding_id')
+      .notNull()
+      .references(() => weddings.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    role: memberRole('role').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.weddingId, t.userId] }),
+    index('wedding_members_user_id_idx').on(t.userId),
+  ],
+)
+
+/** Link mời đồng quản lý: dùng một lần, có hạn */
+export const weddingInvites = pgTable(
+  'wedding_invites',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    weddingId: uuid('wedding_id')
+      .notNull()
+      .references(() => weddings.id, { onDelete: 'cascade' }),
+    token: text('token').notNull().unique(),
+    createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+    acceptedBy: text('accepted_by').references(() => user.id, { onDelete: 'set null' }),
+    ...timestamps,
+  },
+  (t) => [index('wedding_invites_wedding_id_idx').on(t.weddingId)],
+)
+
 // ---------------------------------------------------------------------------
 // Quan hệ (cho db.query.*.findFirst({ with: ... }))
 // ---------------------------------------------------------------------------
@@ -145,6 +190,12 @@ export const weddingsRelations = relations(weddings, ({ many }) => ({
   storyItems: many(storyItems),
   photos: many(photos),
   guests: many(guests),
+  members: many(weddingMembers),
+}))
+
+export const weddingMembersRelations = relations(weddingMembers, ({ one }) => ({
+  wedding: one(weddings, { fields: [weddingMembers.weddingId], references: [weddings.id] }),
+  user: one(user, { fields: [weddingMembers.userId], references: [user.id] }),
 }))
 
 export const eventsRelations = relations(events, ({ one }) => ({
