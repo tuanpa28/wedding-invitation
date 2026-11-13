@@ -30,7 +30,9 @@ npm run db:up
 npm run dev
 ```
 
-Mở http://localhost:3000. Trang chủ hiển thị trạng thái API và database.
+Mở http://localhost:3000. Trang chủ có link xem 3 thiệp mẫu và trạng thái API/database.
+
+Thiệp mẫu: `/demo` (link chung), `/demo/nam2027` (khách nhà trai), `/demo/cohoa27` (khách nhà gái). Thêm `?t=song-hy`, `?t=thanh-lich` hoặc `?t=hoa-co` để đổi template.
 
 ## Các lệnh
 
@@ -54,7 +56,9 @@ src/
   app/          Trang (Server Components) + API (app/api/**/route.ts)
   server/       Backend: db, services, phân quyền (chỉ chạy phía server)
   components/   Component giao diện (components/ui là shadcn)
-  lib/          Hàm và kiểu dùng chung FE/BE
+  lib/          Hàm và kiểu dùng chung FE/BE (lib/invitation: lọc sự kiện, lịch, đếm ngược)
+  templates/    Các mẫu thiệp: song-hy, thanh-lich, hoa-co
+  mocks/        Dữ liệu thiệp mẫu (Phase 1)
 tests/          Vitest
 drizzle/        Migration SQL
 docker/         Script khởi tạo Postgres local

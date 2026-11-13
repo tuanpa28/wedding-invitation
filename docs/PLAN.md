@@ -188,3 +188,9 @@ Ba template dùng chung các section: Phong bì, Lời mời (bố mẹ 2 bên),
   - Route handler đọc DB gọi `await connection()` để không bị prerender lúc build.
   - Postgres local chạy ở cổng **5434** (tránh trùng Postgres khác trên máy).
   - Test dùng `.env.test` (database `thiephong_test`), vì Next.js không đọc `.env.local` khi `NODE_ENV=test`.
+- **Phase 1 (13/11/2026):**
+  - 3 template (Song Hỷ, Thanh Lịch, Hoa Cỏ) chạy với dữ liệu mẫu `src/mocks/invitations.ts`.
+  - Xem thử: `/demo`, `/demo/nam2027` (khách nhà trai), `/demo/cohoa27` (khách nhà gái); thêm `?t=thanh-lich` hoặc `?t=hoa-co` để đổi template.
+  - Ảnh mẫu CC0 nằm trong `public/demo/` (nguồn ở `public/demo/CREDITS.md`); nhạc mẫu public domain phát từ Wikimedia.
+  - Lighthouse mobile (build production, máy local): Performance 85–88, Accessibility 100, Best Practices 100. SEO 83 vì thiệp cố ý đặt `noindex`.
+  - Cache Components: `params` được đọc trong `<Suspense>`, nên link sai hiện trang "Không tìm thấy thiệp" (kèm noindex) với HTTP 200 thay vì 404.
