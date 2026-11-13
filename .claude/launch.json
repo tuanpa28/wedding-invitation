@@ -5,13 +5,13 @@
       "name": "thiephong-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 5173
+      "port": 3000
     },
     {
-      "name": "thiephong-preview",
+      "name": "thiephong-start",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "preview"],
-      "port": 8788
+      "runtimeArgs": ["run", "start"],
+      "port": 3000
     }
   ]
 }

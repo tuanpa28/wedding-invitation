@@ -1,4 +1,4 @@
-/** Kết quả trả về của GET /api/health — dùng chung cho cả frontend và API */
+/** Kết quả trả về của GET /api/health — dùng chung cho trang chủ và API */
 export type HealthResponse = {
   ok: boolean
   app: string

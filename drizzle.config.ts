@@ -1,7 +1,12 @@
+import { loadEnvConfig } from '@next/env'
 import { defineConfig } from 'drizzle-kit'
 
+// Đọc .env.local giống Next.js
+loadEnvConfig(process.cwd())
+
 export default defineConfig({
-  dialect: 'sqlite',
-  schema: './server/db/schema.ts',
-  out: './migrations',
+  dialect: 'postgresql',
+  schema: './src/server/db/schema.ts',
+  out: './drizzle',
+  dbCredentials: { url: process.env.DATABASE_URL! },
 })

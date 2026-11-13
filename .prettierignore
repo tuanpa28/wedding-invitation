@@ -1,6 +1,5 @@
-dist
+.next
 node_modules
-.wrangler
-migrations/meta
+drizzle/meta
 package-lock.json
-worker-configuration.d.ts
+next-env.d.ts

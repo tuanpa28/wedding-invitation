@@ -1,56 +1,67 @@
 # Thiệp Hồng
 
-Nền tảng thiệp cưới online cho nhiều cặp đôi, chạy miễn phí trên Cloudflare.
+Nền tảng thiệp cưới online cho nhiều cặp đôi: mỗi cặp có một link thiệp, mỗi khách có link riêng mang tên mình.
 Kế hoạch chi tiết: [docs/PLAN.md](docs/PLAN.md).
 
 ## Công nghệ
 
-- **Frontend:** React 19 + Vite + TypeScript, Tailwind v4, shadcn/ui
-- **API:** Hono chạy trên Cloudflare Pages Functions (`functions/` → `server/`)
-- **Database:** Cloudflare D1 (SQLite) + Drizzle ORM
-- **Lưu file:** Cloudflare R2
-- **Kiểm tra:** Vitest, ESLint, Prettier
+- **Next.js 16** (App Router): giao diện + API (Route Handlers trong `src/app/api`)
+- **Postgres** + **Drizzle ORM**: local chạy bằng Docker, production dùng Neon
+- Tailwind v4, shadcn/ui
+- Vitest, ESLint, Prettier
 
 ## Chạy ở máy local
 
-Yêu cầu: Node.js ≥ 22. Không cần tài khoản Cloudflare: D1 và R2 được giả lập trong `.wrangler/`.
+Yêu cầu: Node.js ≥ 22, Docker Desktop.
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173 (Vite) + API ở cổng 8788
 ```
-
-Chạy thử bản build giống production:
 
 ```bash
-npm run preview    # http://localhost:8788
+cp .env.example .env.local
 ```
+
+```bash
+npm run db:up
+```
+
+```bash
+npm run dev
+```
+
+Mở http://localhost:3000. Trang chủ hiển thị trạng thái API và database.
 
 ## Các lệnh
 
-| Lệnh                       | Tác dụng                                                 |
-| -------------------------- | -------------------------------------------------------- |
-| `npm run dev`              | Chạy Vite (giao diện) + wrangler (API, D1, R2) cùng lúc  |
-| `npm run preview`          | Build rồi chạy như trên Cloudflare Pages                 |
-| `npm run check`            | typecheck + lint + format + test (chạy trước khi commit) |
-| `npm test`                 | Chạy test (Vitest, có D1 giả lập)                        |
-| `npm run format`           | Format code bằng Prettier                                |
-| `npm run cf-typegen`       | Sinh lại kiểu `Env` sau khi sửa `wrangler.toml`          |
-| `npm run db:generate`      | Sinh migration SQL từ `server/db/schema.ts`              |
-| `npm run db:migrate:local` | Áp migration vào D1 local                                |
+| Lệnh                  | Tác dụng                                                 |
+| --------------------- | -------------------------------------------------------- |
+| `npm run dev`         | Chạy Next.js ở chế độ dev                                |
+| `npm run build`       | Build production                                         |
+| `npm run check`       | typecheck + lint + format + test (chạy trước khi commit) |
+| `npm test`            | Chạy Vitest (dùng database `thiephong_test`)             |
+| `npm run format`      | Format code bằng Prettier                                |
+| `npm run db:up`       | Bật Postgres local (Docker, cổng 5434)                   |
+| `npm run db:down`     | Tắt Postgres local                                       |
+| `npm run db:generate` | Sinh migration từ `src/server/db/schema.ts`              |
+| `npm run db:migrate`  | Áp migration vào database                                |
+| `npm run db:studio`   | Mở Drizzle Studio để xem dữ liệu                         |
 
 ## Cấu trúc
 
 ```
-src/         React SPA (giao diện thiệp, dashboard)
-functions/   Điểm vào Cloudflare Pages Functions
-server/      Hono app: routes, db (Drizzle), logic
-shared/      Kiểu dữ liệu dùng chung FE/BE
-tests/       Test Vitest
-migrations/  Migration D1 (từ Phase 2)
+src/
+  app/          Trang (Server Components) + API (app/api/**/route.ts)
+  server/       Backend: db, services, phân quyền (chỉ chạy phía server)
+  components/   Component giao diện (components/ui là shadcn)
+  lib/          Hàm và kiểu dùng chung FE/BE
+tests/          Vitest
+drizzle/        Migration SQL
+docker/         Script khởi tạo Postgres local
 ```
 
 ## Ghi chú
 
-- Dùng **TypeScript 6** thay vì 7 vì `typescript-eslint` chưa hỗ trợ TS 7.
-- Dùng **ESLint** thay cho oxlint vì chính sách Application Control của Windows chặn file native của oxlint.
+- **TypeScript được ghim ở bản 6:** typescript-eslint chưa hỗ trợ TS 7.
+- **Không dùng oxlint/Biome:** chính sách Application Control của Windows chặn file native của oxlint.
+- **npm 11 chặn script cài đặt mặc định.** Các package được phép chạy script nằm trong `allowScripts` của `package.json`.
