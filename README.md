@@ -27,12 +27,20 @@ npm run db:up
 ```
 
 ```bash
+npm run db:migrate
+```
+
+```bash
+npm run db:seed
+```
+
+```bash
 npm run dev
 ```
 
 Mở http://localhost:3000. Trang chủ có link xem 3 thiệp mẫu và trạng thái API/database.
 
-Thiệp mẫu: `/demo` (link chung), `/demo/nam2027` (khách nhà trai), `/demo/cohoa27` (khách nhà gái). Thêm `?t=song-hy`, `?t=thanh-lich` hoặc `?t=hoa-co` để đổi template.
+Thiệp mẫu (đọc từ Postgres sau khi seed): `/demo`, `/demo/nam2027` (khách nhà trai), `/demo/cohoa27` (khách nhà gái), `/anh-thu`, `/anh-thu/chimai`. `/ban-nhap` là bản nháp nên báo không tìm thấy. Thêm `?t=song-hy`, `?t=thanh-lich` hoặc `?t=hoa-co` để đổi template.
 
 ## Các lệnh
 
@@ -62,6 +70,14 @@ src/
 tests/          Vitest
 drizzle/        Migration SQL
 docker/         Script khởi tạo Postgres local
+```
+
+## Xoá cache thiệp
+
+Trang thiệp được cache. Nếu sửa dữ liệu thẳng trong database, gọi:
+
+```bash
+curl -X POST http://localhost:3000/api/revalidate -H "Authorization: Bearer $REVALIDATE_SECRET" -H "Content-Type: application/json" -d '{"slug":"demo"}'
 ```
 
 ## Ghi chú

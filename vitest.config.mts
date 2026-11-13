@@ -12,5 +12,8 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     environment: 'node',
     setupFiles: ['./tests/setup.ts'],
+    globalSetup: ['./tests/global-setup.ts'],
+    // Các file test dùng chung một database test → chạy tuần tự cho chắc chắn
+    fileParallelism: false,
   },
 })

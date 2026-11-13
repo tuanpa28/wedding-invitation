@@ -194,3 +194,10 @@ Ba template dùng chung các section: Phong bì, Lời mời (bố mẹ 2 bên),
   - Ảnh mẫu CC0 nằm trong `public/demo/` (nguồn ở `public/demo/CREDITS.md`); nhạc mẫu public domain phát từ Wikimedia.
   - Lighthouse mobile (build production, máy local): Performance 85–88, Accessibility 100, Best Practices 100. SEO 83 vì thiệp cố ý đặt `noindex`.
   - Cache Components: `params` được đọc trong `<Suspense>`, nên link sai hiện trang "Không tìm thấy thiệp" (kèm noindex) với HTTP 200 thay vì 404.
+- **Phase 2 (13/11/2026):**
+  - Schema Postgres (`src/server/db/schema.ts`): `weddings`, `events`, `story_items`, `photos`, `guests`. Migration đầu tiên: `drizzle/0000_init.sql`.
+  - `npm run db:seed` ghi 3 thiệp mẫu: `demo` và `anh-thu` đã publish, `ban-nhap` là bản nháp (phải báo không tìm thấy).
+  - Đọc dữ liệu: `src/server/repositories/invitations.ts` (truy vấn DB) → `src/server/services/invitations.ts` (`'use cache'` + tag `wedding:<slug>`).
+  - Sửa dữ liệu ngoài app thì gọi `POST /api/revalidate` (header `Authorization: Bearer $REVALIDATE_SECRET`). `db:seed` tự gọi nếu app đang chạy. Dashboard ở Phase 3 sẽ gọi `refreshWedding(slug)` sau mỗi lần lưu.
+  - Test chạy trên `thiephong_test`: global setup reset schema, áp migration rồi seed lại; chỉ chạy khi tên database kết thúc bằng `_test`.
+  - Lưu ý: `?t=` (xem thử template) đọc `searchParams` nên trang thiệp render theo từng request; dữ liệu vẫn lấy từ cache. Trên Vercel, cache `'use cache'` mặc định nằm trong bộ nhớ của từng instance.

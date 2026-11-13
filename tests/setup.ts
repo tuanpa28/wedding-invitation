@@ -10,3 +10,12 @@ vi.mock('next/server', async (importOriginal) => ({
   ...(await importOriginal<typeof import('next/server')>()),
   connection: async () => {},
 }))
+
+// Ngoài runtime Next.js không có bộ nhớ cache: cacheLife/cacheTag thành no-op,
+// revalidateTag thành spy để test kiểm tra được.
+vi.mock('next/cache', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('next/cache')>()),
+  cacheLife: () => {},
+  cacheTag: () => {},
+  revalidateTag: vi.fn(),
+}))

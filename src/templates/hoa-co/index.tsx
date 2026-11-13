@@ -137,6 +137,11 @@ export default function HoaCoTemplate({
         {featured.lunarText && (
           <p className="mt-1 text-xs text-(--hc-ink)/80">{featured.lunarText}</p>
         )}
+        {invitation.quote && (
+          <p className="relative mx-auto mt-8 max-w-xs font-(family-name:--font-hc-script) text-2xl leading-snug text-(--hc-leaf)">
+            “{invitation.quote}”
+          </p>
+        )}
       </Reveal>
 
       <main className="mx-auto max-w-md space-y-8 px-5 pb-16">

@@ -1,6 +1,6 @@
 import type { Guest, Invitation, Photo } from '@/lib/invitation/types'
 
-// Dữ liệu mẫu cho Phase 1. Từ Phase 2 sẽ đọc từ Postgres.
+// Dữ liệu thiệp mẫu: seed vào Postgres (npm run db:seed) và dùng làm fixture cho test.
 
 const photo = (file: string, width: number, height: number, alt: string): Photo => ({
   src: `/demo/${file}`,
@@ -117,13 +117,111 @@ export const demoGuests: Guest[] = [
   { code: 'cohoa27', side: 'bride', displayName: 'Cô Hoa và gia đình' },
 ]
 
-const invitations = new Map([[demoInvitation.slug, demoInvitation]])
-
-export function getMockInvitation(slug: string): Invitation | undefined {
-  return invitations.get(slug)
+/** Cặp thứ hai: tổ chức ở Huế và TP.HCM, cách nhau một tuần, không có nhạc nền */
+export const anhThuInvitation: Invitation = {
+  slug: 'anh-thu',
+  templateId: 'hoa-co',
+  quote: 'Từ Huế vào Sài Gòn, cuối cùng cũng về chung một nhà.',
+  groom: {
+    fullName: 'Lê Hoàng Anh',
+    shortName: 'Hoàng Anh',
+    title: 'Trưởng nam',
+    father: 'Ông Lê Văn Phúc',
+    mother: 'Bà Nguyễn Thị Hạnh',
+    address: '45 Nguyễn Trãi, Quận 5, TP. Hồ Chí Minh',
+    photo: photo('groom.jpg', 960, 640, 'Chú rể Hoàng Anh'),
+  },
+  bride: {
+    fullName: 'Võ Minh Thư',
+    shortName: 'Minh Thư',
+    title: 'Út nữ',
+    father: 'Ông Võ Văn Tâm',
+    mother: 'Bà Đặng Thị Lan',
+    address: '12 Lê Lợi, TP. Huế',
+    photo: photo('bride.jpg', 960, 1438, 'Cô dâu Minh Thư'),
+  },
+  cover: photo('story-2.jpg', 960, 1440, 'Hai người trên bãi biển lúc hoàng hôn'),
+  events: [
+    {
+      id: 'thu-vu-quy',
+      side: 'bride',
+      type: 'vu_quy',
+      title: 'Lễ Vu Quy',
+      startAt: '2027-03-20T08:00:00+07:00',
+      venue: 'Tư gia nhà gái',
+      address: '12 Lê Lợi, TP. Huế',
+    },
+    {
+      id: 'thu-tiec',
+      side: 'bride',
+      type: 'tiec_cuoi',
+      title: 'Tiệc cưới nhà gái',
+      startAt: '2027-03-20T17:00:00+07:00',
+      venue: 'Nhà hàng Bên Sông',
+      address: '3 Lê Lợi, TP. Huế',
+    },
+    {
+      id: 'anh-thanh-hon',
+      side: 'groom',
+      type: 'thanh_hon',
+      title: 'Lễ Thành Hôn',
+      startAt: '2027-03-27T09:00:00+07:00',
+      venue: 'Tư gia nhà trai',
+      address: '45 Nguyễn Trãi, Quận 5, TP. Hồ Chí Minh',
+    },
+    {
+      id: 'anh-tiec',
+      side: 'groom',
+      type: 'tiec_cuoi',
+      title: 'Tiệc cưới nhà trai',
+      startAt: '2027-03-27T18:00:00+07:00',
+      venue: 'Trung tâm hội nghị Hoa Mai',
+      address: '88 Võ Văn Kiệt, Quận 1, TP. Hồ Chí Minh',
+    },
+  ],
+  story: [
+    {
+      date: 'Tháng 8, 2022',
+      title: 'Chuyến tàu Thống Nhất',
+      text: 'Ngồi cạnh nhau 20 tiếng từ Huế vào Sài Gòn, xuống ga thì đã có số điện thoại.',
+      photo: photo('story-1.jpg', 960, 640, 'Hai người đi chung một chiếc ô'),
+    },
+  ],
+  gallery: [
+    photo('g-06.jpg', 960, 638, 'Cô dâu chú rể trên cây cầu gỗ'),
+    photo('g-07.jpg', 960, 640, 'Chú rể nắm tay cô dâu'),
+    photo('g-09.jpg', 960, 640, 'Cô dâu cười, khăn voan bay trong gió'),
+    photo('g-10.jpg', 960, 640, 'Hai người dưới hoàng hôn màu hồng'),
+  ],
 }
 
-export function getMockGuest(slug: string, code: string): Guest | undefined {
-  if (slug !== demoInvitation.slug) return undefined
-  return demoGuests.find((g) => g.code === code)
+export const anhThuGuests: Guest[] = [
+  { code: 'chimai', side: 'bride', displayName: 'Chị Mai' },
+  { code: 'banduc', side: 'groom', displayName: 'Bạn Đức' },
+]
+
+/** Thiệp đang soạn (chưa publish): link phải báo "Không tìm thấy thiệp" */
+export const draftInvitation: Invitation = {
+  ...demoInvitation,
+  slug: 'ban-nhap',
+  templateId: 'thanh-lich',
+  groom: { ...demoInvitation.groom, fullName: 'Phạm Quốc Bảo', shortName: 'Quốc Bảo' },
+  bride: { ...demoInvitation.bride, fullName: 'Đỗ Thu Hà', shortName: 'Thu Hà' },
 }
+
+export type WeddingFixture = {
+  invitation: Invitation
+  status: 'draft' | 'published'
+  guests: Guest[]
+}
+
+/** Dữ liệu seed vào Postgres (npm run db:seed) và dùng cho test */
+export const seedWeddings: WeddingFixture[] = [
+  { invitation: demoInvitation, status: 'published', guests: demoGuests },
+  { invitation: anhThuInvitation, status: 'published', guests: anhThuGuests },
+  {
+    invitation: draftInvitation,
+    status: 'draft',
+    guests: [{ code: 'khach1', side: 'groom', displayName: 'Anh Khách' }],
+  },
+]

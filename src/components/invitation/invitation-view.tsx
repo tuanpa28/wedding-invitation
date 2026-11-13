@@ -1,13 +1,13 @@
 import { notFound } from 'next/navigation'
 import { isTemplateId } from '@/lib/invitation/helpers'
-import { getMockGuest, getMockInvitation } from '@/mocks/invitations'
+import { getGuest, getInvitation } from '@/server/services/invitations'
 import { TEMPLATES } from '@/templates'
 import { buildTemplateProps } from '@/templates/types'
 
 type Params = Promise<{ slug: string; guestCode?: string }>
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
 
-/** Tải dữ liệu thiệp (Phase 1: dữ liệu mẫu) và render đúng template */
+/** Tải thiệp đã publish từ DB (có cache) và render đúng template */
 export async function InvitationView({
   params,
   searchParams,
@@ -16,10 +16,11 @@ export async function InvitationView({
   searchParams: SearchParams
 }) {
   const { slug, guestCode } = await params
-  const invitation = getMockInvitation(slug)
+  const [invitation, guest] = await Promise.all([
+    getInvitation(slug),
+    guestCode ? getGuest(slug, guestCode) : null,
+  ])
   if (!invitation) notFound()
-
-  const guest = guestCode ? getMockGuest(slug, guestCode) : undefined
   if (guestCode && !guest) notFound()
 
   // ?t=thanh-lich để xem thử template khác
@@ -27,7 +28,7 @@ export async function InvitationView({
   const templateId = isTemplateId(t) ? t : invitation.templateId
   const { Component } = TEMPLATES[templateId]
 
-  return <Component {...buildTemplateProps(invitation, guest)} />
+  return <Component {...buildTemplateProps(invitation, guest ?? undefined)} />
 }
 
 export function InvitationLoading() {

@@ -1,18 +1,20 @@
 import type { Metadata } from 'next'
-import { getMockGuest, getMockInvitation } from '@/mocks/invitations'
-import { eventDateParts, featuredEvent } from './helpers'
+import { eventDateParts, featuredEvent } from '@/lib/invitation/helpers'
+import { getGuest, getInvitation } from '@/server/services/invitations'
+
+const NOT_FOUND: Metadata = {
+  title: 'Không tìm thấy thiệp — Thiệp Hồng',
+  robots: { index: false, follow: false },
+}
 
 /** Tiêu đề + ảnh preview khi chia sẻ link thiệp (Zalo, Messenger, Facebook) */
-export function invitationMetadata(slug: string, guestCode?: string): Metadata {
-  const notFound: Metadata = {
-    title: 'Không tìm thấy thiệp — Thiệp Hồng',
-    robots: { index: false, follow: false },
-  }
-  const invitation = getMockInvitation(slug)
-  if (!invitation) return notFound
+export async function invitationMetadata(slug: string, guestCode?: string): Promise<Metadata> {
+  const [invitation, guest] = await Promise.all([
+    getInvitation(slug),
+    guestCode ? getGuest(slug, guestCode) : null,
+  ])
+  if (!invitation || (guestCode && !guest)) return NOT_FOUND
 
-  const guest = guestCode ? getMockGuest(slug, guestCode) : undefined
-  if (guestCode && !guest) return notFound
   const names = `${invitation.groom.shortName} & ${invitation.bride.shortName}`
   const featured = featuredEvent(invitation.events, guest?.side)
   const date = featured ? eventDateParts(featured.startAt).date : ''

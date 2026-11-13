@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { SystemStatus } from '@/components/system-status'
-import { demoGuests } from '@/mocks/invitations'
+import { seedWeddings } from '@/mocks/invitations'
 import { TEMPLATES } from '@/templates'
 
+// Trang chủ tạm (Phase 2): link tới các thiệp mẫu đã seed vào DB (npm run db:seed)
 export default function Home() {
   const templates = Object.values(TEMPLATES)
 
@@ -14,32 +15,50 @@ export default function Home() {
       </div>
 
       <section className="w-full max-w-xl text-left">
-        <h2 className="mb-3 font-medium">Xem thử thiệp mẫu</h2>
+        <h2 className="mb-3 font-medium">Thiệp mẫu trong database</h2>
         <ul className="grid gap-3 sm:grid-cols-3">
-          {templates.map((t) => (
-            <li key={t.id} className="rounded-xl border bg-white p-4 text-sm shadow-sm">
-              <p className="font-medium">{t.name}</p>
-              <p className="mt-1 text-muted-foreground">{t.description}</p>
-              <div className="mt-3 flex flex-col gap-1">
-                <Link
-                  className="text-rose-700 underline underline-offset-4"
-                  href={`/demo?t=${t.id}`}
-                >
-                  Link chung
-                </Link>
-                {demoGuests.map((g) => (
-                  <Link
-                    key={g.code}
-                    className="text-rose-700 underline underline-offset-4"
-                    href={`/demo/${g.code}?t=${t.id}`}
-                  >
-                    {g.displayName} ({g.side === 'bride' ? 'nhà gái' : 'nhà trai'})
+          {seedWeddings.map(({ invitation, status, guests }) => {
+            const base = `/${invitation.slug}`
+            return (
+              <li
+                key={invitation.slug}
+                className="rounded-xl border bg-white p-4 text-sm shadow-sm"
+              >
+                <p className="font-medium">
+                  {invitation.groom.shortName} &amp; {invitation.bride.shortName}
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  {TEMPLATES[invitation.templateId].name} ·{' '}
+                  {status === 'published' ? 'đã publish' : 'bản nháp (phải báo không tìm thấy)'}
+                </p>
+                <div className="mt-3 flex flex-col gap-1">
+                  <Link className="text-rose-700 underline underline-offset-4" href={base}>
+                    {base}
                   </Link>
-                ))}
-              </div>
-            </li>
-          ))}
+                  {guests.map((g) => (
+                    <Link
+                      key={g.code}
+                      className="text-rose-700 underline underline-offset-4"
+                      href={`${base}/${g.code}`}
+                    >
+                      {g.displayName} ({g.side === 'bride' ? 'nhà gái' : 'nhà trai'})
+                    </Link>
+                  ))}
+                </div>
+              </li>
+            )
+          })}
         </ul>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Thêm{' '}
+          {templates.map((t, i) => (
+            <span key={t.id}>
+              {i > 0 && ', '}
+              <code>?t={t.id}</code>
+            </span>
+          ))}{' '}
+          vào cuối link để xem thử template khác.
+        </p>
       </section>
 
       <SystemStatus />
