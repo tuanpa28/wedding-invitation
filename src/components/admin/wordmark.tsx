@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 /** Wordmark "Thiệp Hồng": chữ nghiêng + dấu triện son nhỏ */
-export function Wordmark({ href = '/dashboard' }: { href?: string }) {
+export function Wordmark({ href = '/admin' }: { href?: string }) {
   return (
     <Link href={href} className="group inline-flex items-center gap-2 rounded-md outline-offset-4">
       <span

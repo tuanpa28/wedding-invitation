@@ -118,3 +118,11 @@ Mỗi phase test xong và chạy ổn mới sang phase tiếp theo.
   - Ảnh: loader chung `src/lib/image-loader.ts` (Cloudinary resize theo URL, ảnh trong `public/` giữ nguyên) vì site tĩnh không có server tối ưu ảnh.
   - Emulator: Firestore **8085**, Hosting **5005**, Auth 9099, UI 4000 (8080 bị Docker chiếm trên máy dev). Project emulator: `demo-thiephong`.
   - Test: 22 test logic + 9 test Security Rules trên emulator (`npm run test:rules`): khách không liệt kê/sửa được khách khác, không gian lận số lần mở, email chưa xác minh không phải admin, collection lạ bị chặn.
+- **Phase B (19/11/2026):**
+  - `/admin`: Firebase Auth (Google). Sau khi đăng nhập, đọc thử `site/admins` — chỉ admin đọc được (rules) — để biết tài khoản có quyền. Popup bị chặn (trình duyệt trong app Zalo/Messenger) thì chuyển sang đăng nhập redirect.
+  - Tab: Mẫu thiệp (bấm là lưu), Thông tin, Sự kiện, Ảnh & nhạc, Chuyện tình. Mỗi tab ghi đè field cấp một của `site/wedding` (`updateDoc`); `null` → `deleteField()`; project mới thì lần lưu đầu `setDoc` cả document.
+  - Khung điện thoại xem trước: iframe `/?preview&side=groom|bride` (không tính lượt mở).
+  - Cloudinary upload preset **unsigned** (site tĩnh không có server ký); giới hạn định dạng/dung lượng đặt trong preset.
+  - `firestore.rules` kiểm tra khung `site/wedding` (templateId hợp lệ, groom/bride là map, ≤ 12 sự kiện, ≤ 10 chuyện tình, ≤ 40 ảnh), không cho xoá document.
+  - Emulator: `window.__thiephongTestSignIn(email)` đăng nhập bằng token Google giả (chỉ Auth Emulator nhận) để test trên trình duyệt / E2E.
+  - Test: 29 test logic (thêm validator form), 11 test rules. Đã thử trên trình duyệt: email ngoài danh sách bị từ chối; đổi mẫu, sửa câu trích dẫn, sửa sự kiện → trang khách đổi ngay.

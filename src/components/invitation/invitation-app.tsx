@@ -41,7 +41,7 @@ export function InvitationApp({ mode }: { mode: 'general' | 'guest' }) {
         setTemplateOverride(url.searchParams.get('t'))
         if (!invitation) return setState({ status: 'missing', reason: 'no-wedding' })
         if (mode === 'guest' && !guest) return setState({ status: 'missing', reason: 'no-guest' })
-        setState({ status: 'ready', invitation, guest })
+        setState({ status: 'ready', invitation, guest: guest ?? previewGuest(url) })
         const couple = `${invitation.groom.shortName} & ${invitation.bride.shortName}`
         document.title = guest
           ? `Kính mời ${guest.displayName} — Lễ cưới ${couple}`
@@ -65,6 +65,18 @@ export function InvitationApp({ mode }: { mode: 'general' | 'guest' }) {
   }
   const { Component } = TEMPLATES[templateId]
   return <Component {...buildTemplateProps(invitation, guest ?? undefined)} />
+}
+
+/** Trang quản lý xem trước như khách một bên: /?preview&side=groom|bride */
+function previewGuest(url: URL): GuestWithOpenState | null {
+  const side = url.searchParams.get('side')
+  if (!url.searchParams.has('preview') || (side !== 'groom' && side !== 'bride')) return null
+  return {
+    code: 'preview',
+    side,
+    displayName: side === 'groom' ? 'Anh Nam' : 'Chị Hoa',
+    firstOpened: false,
+  }
 }
 
 export function InvitationLoading() {

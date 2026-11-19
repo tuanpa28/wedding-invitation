@@ -14,6 +14,8 @@ export interface Photo {
   width: number
   height: number
   alt: string
+  /** Có khi ảnh được tải lên Cloudinary */
+  publicId?: string
 }
 
 export interface Person {

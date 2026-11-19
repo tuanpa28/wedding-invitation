@@ -6,6 +6,7 @@ import {
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing'
 import {
+  deleteDoc,
   deleteField,
   doc,
   getDoc,
@@ -23,6 +24,12 @@ import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest'
 let env: RulesTestEnvironment
 
 const ADMIN = 'admin@thiephong.test'
+const WEDDING = {
+  templateId: 'song-hy',
+  groom: { fullName: 'Nguyễn Minh Tuấn', shortName: 'Minh Tuấn' },
+  bride: { fullName: 'Trần Ngọc Lan', shortName: 'Ngọc Lan' },
+  events: [],
+}
 
 beforeAll(async () => {
   env = await initializeTestEnvironment({
@@ -38,7 +45,7 @@ beforeEach(async () => {
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore()
     await setDoc(doc(db, 'site/admins'), { emails: [ADMIN] })
-    await setDoc(doc(db, 'site/wedding'), { templateId: 'song-hy', events: [] })
+    await setDoc(doc(db, 'site/wedding'), WEDDING)
     await setDoc(doc(db, 'guests/nam2027'), { side: 'groom', displayName: 'Anh Nam', openCount: 0 })
   })
 })
@@ -58,6 +65,21 @@ describe('site/wedding', () => {
     await assertFails(updateDoc(doc(guest(), 'site/wedding'), { templateId: 'hoa-co' }))
     await assertFails(updateDoc(doc(stranger(), 'site/wedding'), { templateId: 'hoa-co' }))
     await assertSucceeds(updateDoc(doc(admin(), 'site/wedding'), { templateId: 'hoa-co' }))
+  })
+
+  it('dữ liệu sai khung bị chặn kể cả với admin', async () => {
+    await assertFails(updateDoc(doc(admin(), 'site/wedding'), { templateId: 'mau-la' }))
+    await assertFails(
+      updateDoc(doc(admin(), 'site/wedding'), { events: Array.from({ length: 13 }, () => ({})) }),
+    )
+    await assertFails(updateDoc(doc(admin(), 'site/wedding'), { groom: 'chuỗi' }))
+    await assertFails(deleteDoc(doc(admin(), 'site/wedding')))
+  })
+
+  it('project mới: admin tạo được nội dung thiệp lần đầu', async () => {
+    await env.withSecurityRulesDisabled((ctx) => deleteDoc(doc(ctx.firestore(), 'site/wedding')))
+    await assertFails(setDoc(doc(stranger(), 'site/wedding'), WEDDING))
+    await assertSucceeds(setDoc(doc(admin(), 'site/wedding'), WEDDING))
   })
 
   it('email đúng nhưng chưa xác minh thì không phải admin', async () => {

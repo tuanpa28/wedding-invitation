@@ -8,7 +8,7 @@ Kế hoạch chi tiết: [docs/PLAN.md](docs/PLAN.md).
 
 - **Next.js 16** xuất site tĩnh (`output: 'export'`) → Firebase Hosting
 - **Cloud Firestore** (dữ liệu) + **Firebase Auth** (đăng nhập quản trị bằng Google), bảo vệ bằng `firestore.rules`
-- Cloudinary (ảnh/nhạc, từ Phase B), Tailwind v4, shadcn/ui, Motion (từ Phase C)
+- Cloudinary (ảnh/nhạc, upload thẳng từ trình duyệt), Tailwind v4, shadcn/ui, Motion (từ Phase C)
 - Vitest, Firebase Emulator (test Security Rules), ESLint, Prettier
 
 ## Chạy ở máy local (không cần project Firebase)
@@ -51,6 +51,35 @@ Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Host
 > Emulator không lưu dữ liệu khi tắt. Mỗi lần bật lại thì chạy lại `npm run seed`.
 > Firestore Emulator dùng cổng **8085**, Hosting dùng **5005** (cổng 8080 và 5000 hay bị Docker hoặc chương trình khác chiếm).
 
+## Trang quản lý (`/admin`)
+
+Đăng nhập Google bằng email nằm trong danh sách admin (`site/admins` trong Firestore). Các tab:
+
+- **Mẫu thiệp:** bấm là đổi ngay cho mọi khách, nội dung giữ nguyên.
+- **Thông tin:** tên, họ tên, thứ bậc, bố mẹ, địa chỉ hai bên; câu trích dẫn.
+- **Sự kiện:** từng bên nhà trai / nhà gái / chung. Khách chỉ thấy sự kiện của bên mình.
+- **Ảnh & nhạc:** ảnh bìa, album (tối đa 40 ảnh), nhạc nền (tải file ≤ 8 MB hoặc dán link https).
+- **Chuyện tình:** các cột mốc của hai bạn.
+
+Khung điện thoại bên phải hiện đúng thiệp khách thấy (đổi "Link chung / Khách nhà trai / Khách nhà gái") và tải lại sau mỗi lần lưu.
+
+**Khi chạy emulator:** bấm "Đăng nhập với Google", trong cửa sổ của Auth Emulator chọn _Add new account_ và nhập `admin@thiephong.test` (admin thử do `npm run seed` tạo).
+
+**Danh sách admin:** sửa `ADMIN_EMAILS` trong `.env.local` rồi chạy `npm run seed -- --prod`, hoặc sửa trực tiếp document `site/admins` (field `emails`, dạng mảng) trong Firebase Console → Firestore. App không cho sửa danh sách này.
+
+### Cloudinary (tải ảnh/nhạc)
+
+1. Tạo tài khoản miễn phí tại [cloudinary.com](https://cloudinary.com/). _Cloud name_ nằm ở trang Dashboard.
+2. **Settings → Upload → Upload presets → Add upload preset:**
+   - _Signing mode_: **Unsigned**
+   - _Asset folder_: `thiep-cuoi`
+   - _Allowed formats_: `jpg,jpeg,png,webp,heic,avif,mp3,m4a,aac`
+   - _Max file size_: `10000000` (10 MB)
+   - _Incoming transformation_ (tuỳ chọn, tiết kiệm dung lượng): `c_limit,w_2400,h_2400`
+3. Điền vào `.env.local`: `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...` và `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=<tên preset>`, rồi chạy lại `npm run dev` / `npm run deploy`.
+
+> Upload preset _unsigned_ nghĩa là ai biết tên preset đều tải file lên được (site tĩnh không có server để ký). Giới hạn định dạng/dung lượng ở bước 2 giúp tránh bị lạm dụng; nếu thấy dung lượng tăng bất thường, đổi tên preset là xong.
+
 ## Các lệnh
 
 | Lệnh                 | Tác dụng                                                                      |
@@ -71,7 +100,7 @@ Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Host
 
 1. Vào [console.firebase.google.com](https://console.firebase.google.com/) → **Create a project**, đặt tên (ví dụ `thiep-cuoi-tuan-lan`). Có thể tắt Google Analytics. Project mới mặc định ở gói **Spark** (miễn phí, không cần thẻ).
 2. **Build → Firestore Database → Create database**, chọn vùng `asia-southeast1 (Singapore)`, _Start in production mode_.
-3. **Build → Authentication → Get started → Sign-in method → Google → Enable** (chọn email hỗ trợ là email của bạn). Dùng từ Phase B.
+3. **Build → Authentication → Get started → Sign-in method → Google → Enable** (chọn email hỗ trợ là email của bạn). Sau khi deploy, vào **Authentication → Settings → Authorized domains** kiểm tra đã có `<project-id>.web.app` (Firebase tự thêm).
 4. **Project settings (bánh răng) → General → Your apps → Web (`</>`)**: đặt tên app, **không** cần tick Firebase Hosting ở bước này. Firebase hiện đoạn `firebaseConfig`.
 
 ### 2. Cấu hình project
@@ -118,7 +147,7 @@ npm run seed -- --prod
 npm run deploy
 ```
 
-Thiệp ở `https://<project-id>.web.app` (và `https://<project-id>.firebaseapp.com`). Mỗi lần sửa code thì chạy lại `npm run deploy`. Nội dung thiệp sửa trong trang quản lý (Phase B) thì không cần deploy lại.
+Thiệp ở `https://<project-id>.web.app` (và `https://<project-id>.firebaseapp.com`). Mỗi lần sửa code thì chạy lại `npm run deploy`. Nội dung thiệp sửa trong trang quản lý (`/admin`) thì không cần deploy lại.
 
 > Khi deploy xong, đặt lại `NEXT_PUBLIC_FIREBASE_EMULATOR=true` nếu muốn tiếp tục làm việc với emulator ở máy.
 
@@ -126,9 +155,11 @@ Thiệp ở `https://<project-id>.web.app` (và `https://<project-id>.firebaseap
 
 ```
 src/
-  app/                 page.tsx (link chung), m/page.tsx (link khách), not-found.tsx (404)
+  app/                 page.tsx (link chung), m/page.tsx (link khách), admin/page.tsx (quản lý), not-found.tsx (404)
+  components/admin     Trang quản lý: đăng nhập, các form, khung xem trước
   components/invitation  Phần dùng chung của thiệp + InvitationApp (đọc Firestore, chọn template)
-  lib/firebase/        Khởi tạo Firebase, đọc dữ liệu thiệp (Firestore Lite)
+  lib/firebase/        Khởi tạo Firebase; public-data (Firestore Lite cho khách), admin-client (Auth + Firestore cho admin)
+  lib/validators/      Kiểm tra dữ liệu form (zod)
   lib/invitation/      Kiểu dữ liệu, lọc sự kiện theo bên, lịch, đếm ngược
   templates/           song-hy, thanh-lich, hoa-co
   mocks/               Thiệp mẫu (seed + test)
