@@ -9,6 +9,7 @@ import type { WeddingDoc } from '@/lib/invitation/types'
 import { TEMPLATE_CATALOG } from '@/templates/catalog'
 import type { WeddingPatch } from './editor-types'
 import { EventsForm } from './events-form'
+import { GuestsTab } from './guests/guests-tab'
 import { InfoForm } from './info-form'
 import { MediaForm } from './media-form'
 import { PhonePreview, type PreviewSide } from './phone-preview'
@@ -21,6 +22,7 @@ const TABS = [
   { value: 'events', label: 'Sự kiện' },
   { value: 'media', label: 'Ảnh & nhạc' },
   { value: 'story', label: 'Chuyện tình' },
+  { value: 'guests', label: 'Khách mời' },
 ] as const
 
 export function WeddingEditor({ initial }: { initial: WeddingDoc | null }) {
@@ -102,6 +104,9 @@ export function WeddingEditor({ initial }: { initial: WeddingDoc | null }) {
             </TabsContent>
             <TabsContent value="story">
               <StoryForm wedding={wedding} onSave={onSave} />
+            </TabsContent>
+            <TabsContent value="guests">
+              <GuestsTab wedding={wedding} onSave={onSave} />
             </TabsContent>
           </div>
         </Tabs>

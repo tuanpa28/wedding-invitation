@@ -115,6 +115,21 @@ describe('guests', () => {
     await assertSucceeds(setDoc(doc(admin(), 'guests/moi'), { side: 'bride', displayName: 'X' }))
   })
 
+  it('admin chỉ ghi được khách đúng khung dữ liệu', async () => {
+    const ok = { side: 'groom', displayName: 'Anh Nam', group: 'Bạn bè', maxAttendees: 2 }
+    await assertSucceeds(setDoc(doc(admin(), 'guests/abc234'), { ...ok, openCount: 0 }))
+    await assertFails(setDoc(doc(admin(), 'guests/x1'), ok)) // mã quá ngắn
+    await assertFails(setDoc(doc(admin(), 'guests/abc235'), { ...ok, side: 'ban-be' }))
+    await assertFails(setDoc(doc(admin(), 'guests/abc236'), { ...ok, displayName: '' }))
+    await assertFails(setDoc(doc(admin(), 'guests/abc237'), { ...ok, maxAttendees: 50 }))
+    await assertFails(setDoc(doc(admin(), 'guests/abc238'), { ...ok, openCount: 9 }))
+    // Sửa tên giữ nguyên số lần mở
+    await assertSucceeds(
+      updateDoc(doc(admin(), 'guests/nam2027'), { displayName: 'Anh Nam và vợ' }),
+    )
+    await assertFails(updateDoc(doc(admin(), 'guests/nam2027'), { group: 'x'.repeat(41) }))
+  })
+
   it('mở thiệp lần đầu: tăng openCount 1, ghi thời điểm mở', async () => {
     const ref = doc(guest(), 'guests/nam2027')
     await assertSucceeds(

@@ -27,7 +27,8 @@ service cloud.firestore {
         && d.groom is map && d.bride is map
         && d.events is list && d.events.size() <= 12
         && d.get('story', []) is list && d.get('story', []).size() <= 10
-        && d.get('gallery', []) is list && d.get('gallery', []).size() <= 40;
+        && d.get('gallery', []) is list && d.get('gallery', []).size() <= 40
+        && d.get('inviteMessage', '') is string && d.get('inviteMessage', '').size() <= 1000;
     }
 
     // Danh sách admin: chỉ admin xem, không ai sửa qua app
@@ -39,8 +40,22 @@ service cloud.firestore {
     // Khách mời: khách chỉ đọc được đúng mã của mình (không liệt kê được danh sách)
     match /guests/{code} {
       allow get: if true;
-      allow list, create, delete: if isAdmin();
-      allow update: if isAdmin() || isOpenPing();
+      allow list, delete: if isAdmin();
+      allow create: if isAdmin()
+        && code.matches('^[A-Za-z0-9_-]{3,32}$')
+        && isValidGuest(request.resource.data)
+        && request.resource.data.get('openCount', 0) == 0;
+      allow update: if (isAdmin() && isValidGuest(request.resource.data)) || isOpenPing();
+    }
+
+    // Khung dữ liệu khách (khớp guestSchema trong src/lib/guests.ts)
+    function isValidGuest(d) {
+      return d.side in ['groom', 'bride']
+        && d.displayName is string && d.displayName.size() >= 1 && d.displayName.size() <= 80
+        && (!('group' in d) || (d.group is string && d.group.size() <= 40))
+        && (!('maxAttendees' in d)
+          || (d.maxAttendees is int && d.maxAttendees >= 1 && d.maxAttendees <= 20))
+        && d.get('openCount', 0) is int;
     }
 
     // Khách mở thiệp: chỉ được tăng openCount thêm 1 và ghi thời điểm mở (giờ server)

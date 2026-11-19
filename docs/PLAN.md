@@ -134,3 +134,11 @@ Mỗi phase test xong và chạy ổn mới sang phase tiếp theo.
   - **Giảm chuyển động:** theo hệ điều hành (`MotionConfig reducedMotion="user"`, variant `motion-reduce`) → mở ngay, không hạt rơi, không cuộn mượt. `?motion=full` bỏ qua cài đặt này (variant `motion-reduce` được định nghĩa lại để bỏ qua phần tử trong `[data-motion=full]`); khung xem trước của trang quản lý luôn dùng `?motion=full`.
   - **Lighthouse mobile** (build production trên Hosting emulator, dữ liệu mẫu): Accessibility 100, Best Practices 100, **Performance 69–71** (LCP ~7 s mô phỏng). Chưa đạt mục tiêu 85: không phải do animation (TBT 260–320 ms) mà do site tĩnh phải tải JS → đọc Firestore → tải template rồi mới vẽ được thiệp; đo không giới hạn mạng thì mọi request xong trong ~0,7 s. Hướng xử lý (Phase F): nhúng sẵn nội dung thiệp vào HTML lúc build để vẽ ngay, trình duyệt vẫn đọc Firestore để cập nhật.
   - Sửa: `eslint-config-next` bị xoá nhầm khỏi `package.json` ở Phase A (lint vẫn chạy nhờ còn trong `node_modules`) → đã cài lại.
+- **Phase D (19/11/2026):**
+  - Tab **Khách mời** trong `/admin`: danh sách realtime (`onSnapshot`), thống kê (tổng, từng bên, ước tính số người, đã mở %), tìm theo tên/nhóm/mã, lọc theo bên / trạng thái mở / nhóm.
+  - Thêm/sửa/xoá khách. Mã link 6 ký tự ngẫu nhiên từ bảng chữ không gây nhầm (bỏ 0/O/1/l), sửa được lúc tạo, không đổi được sau đó (là id document).
+  - Mỗi khách: chép link `/m/<mã>`, chép tin nhắn mời (mẫu có `{ten}`, `{link}`, `{chu_re}`, `{co_dau}`, lưu ở `site/wedding.inviteMessage`), mã QR (tải PNG), trạng thái "Đã mở n lần · ngày giờ".
+  - Excel (`read-excel-file`/`write-excel-file`, chạy trong trình duyệt): nhập .xlsx (tiêu đề có dấu/không dấu, "Bên" chấp nhận Nhà trai/Nhà gái/trai/gái…), xem trước + báo lỗi theo dòng, ghi theo lô ≤ 400; tải file mẫu; xuất danh sách kèm link và trạng thái mở.
+  - Link dùng `NEXT_PUBLIC_SITE_URL` nếu có, không thì địa chỉ trang hiện tại.
+  - `firestore.rules`: khách phải đúng khung (bên, tên 1–80, nhóm ≤ 40, số người 1–20, mã 3–32 ký tự), khách mới có `openCount = 0`; `inviteMessage` ≤ 1000 ký tự.
+  - Test: 38 test logic (thêm sinh mã, đọc Excel, tin nhắn), 12 test rules. Đã thử trên trình duyệt: nhập file 50 khách + 1 dòng lỗi → nhập đúng 50; mở link một khách → trang quản lý hiện "Đã mở" ngay; QR đúng link; thêm khách qua dialog.

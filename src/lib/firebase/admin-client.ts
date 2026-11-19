@@ -13,16 +13,21 @@ import {
   type User,
 } from 'firebase/auth'
 import {
+  collection,
   connectFirestoreEmulator,
+  deleteDoc,
   deleteField,
   doc,
   getDoc,
   getFirestore,
+  onSnapshot,
   setDoc,
   updateDoc,
+  writeBatch,
   type Firestore,
+  type Timestamp,
 } from 'firebase/firestore'
-import type { WeddingDoc } from '@/lib/invitation/types'
+import type { GuestDoc, WeddingDoc } from '@/lib/invitation/types'
 import { toFirestore } from '@/lib/validators/wedding'
 import { FIRESTORE_EMULATOR_PORT, getFirebaseApp, USE_EMULATOR } from './config'
 
@@ -130,4 +135,74 @@ export async function saveWedding(
     update[key] = value === null ? deleteField() : value
   }
   await updateDoc(weddingRef(), update)
+}
+
+/* ------------------------------------------------------------------ */
+/* Khách mời                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Khách trong trang quản lý: dữ liệu + trạng thái đã mở thiệp */
+export interface AdminGuest extends GuestDoc {
+  code: string
+  firstOpenedAt?: Date
+  lastOpenedAt?: Date
+}
+
+/** Theo dõi danh sách khách theo thời gian thực (khách vừa mở thiệp là thấy ngay) */
+export function subscribeGuests(
+  onChange: (guests: AdminGuest[]) => void,
+  onError: (error: unknown) => void,
+) {
+  return onSnapshot(
+    collection(getAdminDb(), 'guests'),
+    (snap) => {
+      const guests = snap.docs.map((d) => {
+        const data = d.data() as GuestDoc & { firstOpenedAt?: Timestamp; lastOpenedAt?: Timestamp }
+        return {
+          ...data,
+          code: d.id,
+          firstOpenedAt: data.firstOpenedAt?.toDate(),
+          lastOpenedAt: data.lastOpenedAt?.toDate(),
+        }
+      })
+      guests.sort((a, b) => a.displayName.localeCompare(b.displayName, 'vi'))
+      onChange(guests)
+    },
+    onError,
+  )
+}
+
+type GuestFields = Pick<GuestDoc, 'displayName' | 'side' | 'group' | 'maxAttendees'>
+
+/** Thêm khách mới (mã = id document, không đổi được sau khi tạo) */
+export async function createGuest(code: string, fields: GuestFields) {
+  const ref = doc(getAdminDb(), 'guests', code)
+  if ((await getDoc(ref)).exists()) {
+    throw Object.assign(new Error('Mã này đã có khách khác dùng'), { code: 'already-exists' })
+  }
+  await setDoc(ref, { ...toFirestore(fields), openCount: 0 })
+}
+
+/** Sửa thông tin khách; giữ nguyên số lần mở thiệp. Ô để trống thì xoá field. */
+export function updateGuest(code: string, fields: GuestFields) {
+  return updateDoc(doc(getAdminDb(), 'guests', code), {
+    displayName: fields.displayName,
+    side: fields.side,
+    group: fields.group ?? deleteField(),
+    maxAttendees: fields.maxAttendees ?? deleteField(),
+  })
+}
+
+export const deleteGuest = (code: string) => deleteDoc(doc(getAdminDb(), 'guests', code))
+
+/** Nhập nhiều khách một lần (mỗi lô ≤ 400 thao tác, giới hạn của Firestore là 500) */
+export async function importGuests(guests: (GuestFields & { code: string })[]) {
+  const db = getAdminDb()
+  for (let i = 0; i < guests.length; i += 400) {
+    const batch = writeBatch(db)
+    for (const { code, ...fields } of guests.slice(i, i + 400)) {
+      batch.set(doc(db, 'guests', code), { ...toFirestore(fields), openCount: 0 })
+    }
+    await batch.commit()
+  }
 }

@@ -77,6 +77,8 @@ export interface Invitation {
 export type WeddingDoc = Omit<Invitation, 'slug' | 'cover'> & {
   /** Chưa có ảnh bìa → dùng ảnh bìa mặc định */
   cover?: Photo
+  /** Tin nhắn mời mẫu để gửi kèm link (trang quản lý → Khách mời) */
+  inviteMessage?: string
 }
 
 /** Document guests/{code}. Thời điểm mở lưu dạng Timestamp của Firestore. */
