@@ -19,12 +19,13 @@ export const TEMPLATE_CATALOG: Record<TemplateId, TemplateInfo> = {
     swatch: ['#6b130e', '#ecdcae', '#d3b064'],
     glyph: '囍',
   },
-  'thanh-lich': {
-    id: 'thanh-lich',
-    name: 'Thanh Lịch',
-    description: 'Tối giản hiện đại: chữ lớn, tờ lịch tháng cưới khoanh ngày.',
-    swatch: ['#f6f5f1', '#1c2430', '#7d8ca3'],
-    glyph: '09',
+  nga: {
+    id: 'nga',
+    name: 'Ngà',
+    description:
+      'Trang nhã: nền ngà, phong bì con dấu sáp vàng, ảnh trượt ra, dải phim và lịch trái tim.',
+    swatch: ['#f6f2ec', '#1f1a17', '#8a6f55'],
+    glyph: '♡',
   },
   'hoa-co': {
     id: 'hoa-co',

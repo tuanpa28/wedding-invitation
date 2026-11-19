@@ -6,7 +6,7 @@ export type EventSide = Side | 'both'
 
 export type EventType = 'an_hoi' | 'vu_quy' | 'thanh_hon' | 'tiec_cuoi' | 'khac'
 
-export const TEMPLATE_IDS = ['song-hy', 'thanh-lich', 'hoa-co'] as const
+export const TEMPLATE_IDS = ['song-hy', 'nga', 'hoa-co'] as const
 export type TemplateId = (typeof TEMPLATE_IDS)[number]
 
 export interface Photo {

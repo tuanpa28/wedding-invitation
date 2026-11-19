@@ -158,3 +158,9 @@ Mỗi phase test xong và chạy ổn mới sang phase tiếp theo.
   - **Lighthouse mobile** (build production + Hosting emulator, dữ liệu mẫu, đo 2 lần): link chung **Performance 85**, Accessibility 100, Best Practices 100, SEO 100 (FCP 1,4 s, LCP 4,1 s, TBT 150 ms, CLS 0). Link riêng **68–69** (LCP 7,2 s mô phỏng): tên khách là phần tử lớn nhất trên phong bì và chỉ có sau khi đọc Firestore. SEO link riêng 63 vì cố ý `noindex`.
   - Lưu ý vận hành: nội dung dựng sẵn là bản lúc deploy. Sửa trong `/admin` thì khách vẫn thấy bản mới (sau ~0,5 s); sau khi đổi mẫu hoặc ảnh bìa nên chạy lại `npm run deploy` để HTML dựng sẵn khớp, tránh thoáng thấy bản cũ.
   - Test: 50 test logic, 22 test rules.
+- **Đổi mẫu (19/11/2026):** bỏ Thanh Lịch, thay bằng mẫu **Ngà** (`nga`) theo phong cách một thiệp tham khảo người dùng chọn — code và nội dung viết mới, không dùng ảnh/chữ của thiệp gốc.
+  - Nền ngà, thẻ trắng, cành lá vẽ nét ở góc; font Great Vibes (chữ viết tay "Wedding Invitation" ánh nhũ), Cormorant Garamond (thân bài), Josefin Sans (chữ in hoa giãn cách); nâu taupe `#8a6f55`.
+  - Mở thiệp ngay trong trang: con dấu sáp vàng (chữ cái tên hai người) tan đi, vạt phong bì lật, ảnh bìa trượt lên khỏi phong bì.
+  - Máy tính: hai cột, cột trái (khách mời, giờ, ngày âm, nơi tổ chức, bản đồ nhúng Google Maps không cần key) đứng yên khi cuộn; điện thoại: một cột.
+  - Cột phải: ảnh lớn parallax, câu trích dẫn, chân dung + bố mẹ hai bên, "WELCOME TO WEDDING", dải phim đen (ảnh + đếm ngược), ảnh có chữ dọc "MY LOVE · FOREVER", lịch tháng nền đen với trái tim đập ở ngày cưới, các nghi lễ khác, album, hộp quà (bấm mở → VietQR), RSVP, lời chúc (khung cuộn), "Thank you".
+  - Không có phần chuyện tình (theo yêu cầu). Thiệp đã lưu mã mẫu cũ `thanh-lich` tự dùng Song Hỷ.

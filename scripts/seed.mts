@@ -32,7 +32,7 @@ if (prod) {
 }
 
 const projectId = prod ? process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID : EMULATOR_PROJECT_ID
-if (!projectId) throw new Error('Thiếu NEXT_PUBLIC_FIREBASE_PROJECT_ID trong .env.local')
+if (!projectId) throw new Error('Thiếu NEXT_PUBLIC_FIREBASE_PROJECT_ID trong .env')
 
 const app = initializeApp(prod ? { credential: applicationDefault(), projectId } : { projectId })
 const db = getFirestore(app)
@@ -43,7 +43,7 @@ const adminEmails = (process.env.ADMIN_EMAILS ?? (prod ? '' : EMULATOR_ADMIN))
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean)
 if (prod && adminEmails.length === 0) {
-  throw new Error('Thiếu ADMIN_EMAILS trong .env.local (email Google của người quản trị)')
+  throw new Error('Thiếu ADMIN_EMAILS trong .env (email Google của người quản trị)')
 }
 
 const { slug, ...wedding } = demoInvitation

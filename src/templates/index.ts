@@ -11,12 +11,12 @@ export const TEMPLATE_LOADERS: Record<
   () => Promise<{ default: React.ComponentType<TemplateProps> }>
 > = {
   'song-hy': () => import('./song-hy'),
-  'thanh-lich': () => import('./thanh-lich'),
+  nga: () => import('./nga'),
   'hoa-co': () => import('./hoa-co'),
 }
 
 export const TEMPLATE_COMPONENTS = {
   'song-hy': lazy(TEMPLATE_LOADERS['song-hy']),
-  'thanh-lich': lazy(TEMPLATE_LOADERS['thanh-lich']),
+  nga: lazy(TEMPLATE_LOADERS['nga']),
   'hoa-co': lazy(TEMPLATE_LOADERS['hoa-co']),
 } satisfies Record<TemplateId, React.LazyExoticComponent<React.ComponentType<TemplateProps>>>

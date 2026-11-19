@@ -23,7 +23,7 @@ service cloud.firestore {
 
     // Kiểm tra khung dữ liệu thiệp (giới hạn khớp src/lib/invitation/defaults.ts)
     function isValidWedding(d) {
-      return d.templateId in ['song-hy', 'thanh-lich', 'hoa-co']
+      return d.templateId in ['song-hy', 'nga', 'hoa-co']
         && d.groom is map && d.bride is map
         && d.events is list && d.events.size() <= 12
         && d.get('story', []) is list && d.get('story', []).size() <= 10

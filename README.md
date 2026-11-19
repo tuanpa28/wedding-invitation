@@ -21,8 +21,10 @@ npm install
 ```
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
+
+Tạo file `.env.development.local` với một dòng `NEXT_PUBLIC_FIREBASE_EMULATOR=true`: khi chạy `npm run dev`, thiệp và trang quản lý dùng emulator thay vì project thật. Lúc build/deploy, Next.js không đọc file này.
 
 Bật emulator (Firestore, Auth, Hosting; giao diện quản lý emulator ở http://localhost:4000). Để cửa sổ này chạy:
 
@@ -45,7 +47,7 @@ npm run dev
 - http://localhost:3000: thiệp, link chung (sự kiện cả hai bên)
 - http://localhost:3000/m/nam2027: khách nhà trai "Anh Nam"
 - http://localhost:3000/m/cohoa27: khách nhà gái "Cô Hoa và gia đình"
-- Thêm `?t=song-hy`, `?t=thanh-lich` hoặc `?t=hoa-co` để xem thử template khác.
+- Thêm `?t=song-hy`, `?t=nga` hoặc `?t=hoa-co` để xem thử template khác.
 - Máy tắt hiệu ứng (Windows: _Settings → Accessibility → Visual effects → Animation effects_; điện thoại: _Giảm chuyển động_) thì thiệp mở ngay, không có hiệu ứng. Thêm `?motion=full` để luôn xem hiệu ứng (khung xem trước trong `/admin` đã bật sẵn).
 
 Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Hosting): tắt `npm run emulators`, rồi chạy `npm run preview` (build xong tự bật emulator, thiệp ở http://localhost:5005), sau đó chạy lại `npm run seed`.
@@ -70,7 +72,7 @@ Khung điện thoại bên phải hiện đúng thiệp khách thấy (đổi "L
 
 **Khi chạy emulator:** bấm "Đăng nhập với Google", trong cửa sổ của Auth Emulator chọn _Add new account_ và nhập `admin@thiephong.test` (admin thử do `npm run seed` tạo).
 
-**Danh sách admin:** sửa `ADMIN_EMAILS` trong `.env.local` rồi chạy `npm run seed -- --prod`, hoặc sửa trực tiếp document `site/admins` (field `emails`, dạng mảng) trong Firebase Console → Firestore. App không cho sửa danh sách này.
+**Danh sách admin:** sửa `ADMIN_EMAILS` trong `.env` rồi chạy `npm run seed -- --prod`, hoặc sửa trực tiếp document `site/admins` (field `emails`, dạng mảng) trong Firebase Console → Firestore. App không cho sửa danh sách này.
 
 ### Cloudinary (tải ảnh/nhạc)
 
@@ -81,7 +83,7 @@ Khung điện thoại bên phải hiện đúng thiệp khách thấy (đổi "L
    - _Allowed formats_: `jpg,jpeg,png,webp,heic,avif,mp3,m4a,aac`
    - _Max file size_: `10000000` (10 MB)
    - _Incoming transformation_ (tuỳ chọn, tiết kiệm dung lượng): `c_limit,w_2400,h_2400`
-3. Điền vào `.env.local`: `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...` và `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=<tên preset>`, rồi chạy lại `npm run dev` / `npm run deploy`.
+3. Điền vào `.env`: `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...` và `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=<tên preset>`, rồi chạy lại `npm run dev` / `npm run deploy`.
 
 > Upload preset _unsigned_ nghĩa là ai biết tên preset đều tải file lên được (site tĩnh không có server để ký). Giới hạn định dạng/dung lượng ở bước 2 giúp tránh bị lạm dụng; nếu thấy dung lượng tăng bất thường, đổi tên preset là xong.
 
@@ -110,7 +112,7 @@ Khung điện thoại bên phải hiện đúng thiệp khách thấy (đổi "L
 
 ### 2. Cấu hình project
 
-Điền vào `.env.local` (lấy từ `firebaseConfig`):
+Điền vào `.env` (lấy từ `firebaseConfig`):
 
 ```
 NEXT_PUBLIC_FIREBASE_EMULATOR=false
@@ -139,7 +141,7 @@ npx firebase use --add
 Danh sách admin (và thiệp mẫu nếu project chưa có nội dung) được ghi bằng Admin SDK:
 
 1. **Project settings → Service accounts → Generate new private key** → lưu file JSON vào thư mục dự án, ví dụ `service-account.json` (đã có trong `.gitignore`, **không bao giờ commit hay gửi file này cho ai**).
-2. Thêm vào `.env.local`: `GOOGLE_APPLICATION_CREDENTIALS=service-account.json`
+2. Thêm vào `.env`: `GOOGLE_APPLICATION_CREDENTIALS=service-account.json`
 3. Chạy:
 
 ```bash
@@ -163,12 +165,10 @@ Thiệp ở `https://<project-id>.web.app` (và `https://<project-id>.firebaseap
 RSVP và lời chúc ai cũng gửi được (site không có server). Để chặn bot/script gửi hàng loạt:
 
 1. Firebase Console → **App Check** → **Apps** → chọn web app → **reCAPTCHA v3** → làm theo hướng dẫn tạo khoá (trang reCAPTCHA của Google), dán _secret key_ vào Firebase.
-2. Dán _site key_ vào `.env.local`: `NEXT_PUBLIC_RECAPTCHA_SITE_KEY=...` rồi `npm run deploy`.
+2. Dán _site key_ vào `.env`: `NEXT_PUBLIC_RECAPTCHA_SITE_KEY=...` rồi `npm run deploy`.
 3. Đợi 1–2 ngày xem tab **Metrics** của App Check thấy request hợp lệ, rồi bấm **Enforce** cho Cloud Firestore.
 
 > Khi đã Enforce, mọi request Firestore phải có token App Check (trang quản lý và thiệp đều tự gắn). Lệnh `npm run seed -- --prod` dùng Admin SDK nên không bị ảnh hưởng.
-
-> Khi deploy xong, đặt lại `NEXT_PUBLIC_FIREBASE_EMULATOR=true` nếu muốn tiếp tục làm việc với emulator ở máy.
 
 ## Cấu trúc
 
@@ -180,7 +180,7 @@ src/
   lib/firebase/        Khởi tạo Firebase; public-data (Firestore Lite cho khách), admin-client (Auth + Firestore cho admin)
   lib/validators/      Kiểm tra dữ liệu form (zod)
   lib/invitation/      Kiểu dữ liệu, lọc sự kiện theo bên, lịch, đếm ngược
-  templates/           song-hy, thanh-lich, hoa-co
+  templates/           song-hy, nga, hoa-co
   mocks/               Thiệp mẫu (seed + test)
 scripts/seed.mts       Ghi dữ liệu bằng Admin SDK (emulator hoặc project thật)
 firestore.rules        Quyền truy cập dữ liệu

@@ -103,7 +103,9 @@ export function InvitationApp({
   if (state.status === 'missing') return <InvitationMissing reason={state.reason} />
 
   const { invitation, guest } = state
-  const templateId = isTemplateId(templateOverride) ? templateOverride : invitation.templateId
+  // Mẫu đã bỏ (ví dụ thanh-lich cũ) → dùng mẫu mặc định thay vì lỗi
+  const saved = isTemplateId(invitation.templateId) ? invitation.templateId : 'song-hy'
+  const templateId = isTemplateId(templateOverride) ? templateOverride : saved
   if (eventsForSide(invitation.events, guest?.side).length === 0) {
     return <InvitationMissing reason="no-wedding" />
   }
