@@ -1,5 +1,6 @@
 'use client'
 
+import { AnimatePresence, m } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { countdownParts } from '@/lib/invitation/helpers'
 import { cn } from '@/lib/utils'
@@ -49,12 +50,32 @@ export function Countdown({
     <div className={cn('grid grid-cols-4', className)} role="timer" aria-label="Thời gian còn lại">
       {UNITS.map(({ key, label }) => (
         <div key={key} className={cn('flex flex-col items-center', itemClassName)}>
-          <span className={cn('tabular-nums', numberClassName)}>
-            {parts ? String(parts[key]).padStart(2, '0') : '--'}
-          </span>
+          <RollingNumber
+            value={parts ? String(parts[key]).padStart(2, '0') : '--'}
+            className={numberClassName}
+          />
           <span className={labelClassName}>{label}</span>
         </div>
       ))}
     </div>
+  )
+}
+
+/** Số đổi giá trị thì trượt lên như bảng lật (giảm chuyển động: chỉ đổi số) */
+function RollingNumber({ value, className }: { value: string; className?: string }) {
+  return (
+    <span className={cn('relative inline-flex overflow-hidden tabular-nums', className)}>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <m.span
+          key={value}
+          initial={{ y: '-100%', opacity: 0 }}
+          animate={{ y: '0%', opacity: 1 }}
+          exit={{ y: '100%', opacity: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {value}
+        </m.span>
+      </AnimatePresence>
+    </span>
   )
 }

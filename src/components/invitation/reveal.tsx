@@ -1,23 +1,55 @@
 'use client'
 
 import { useEffect, useRef, useState, type ElementType, type ReactNode } from 'react'
-import { cn } from '@/lib/utils'
+import { Reveal as MotionReveal, type RevealVariant } from './motion'
+
+type RevealTag = 'div' | 'section' | 'li' | 'header' | 'footer' | 'figure' | 'p' | 'ol' | 'ul'
 
 /**
- * Gắn `data-shown` khi phần tử cuộn vào màn hình. Template tự quyết định hiệu ứng
- * qua class `data-shown:*` (mặc định: hiện dần + trượt lên nhẹ).
+ * Hiện dần khi cuộn tới.
+ * - Mặc định: hiệu ứng Motion (`variant`: rise, fade, zoom, left, right, blur).
+ * - `plain`: không có hiệu ứng sẵn, chỉ gắn `data-shown` để CSS của template tự vẽ
+ *   (cành hoa tự mọc, vòng khoanh ngày cưới...).
  */
 export function Reveal({
-  as: Tag = 'div',
+  as = 'div',
   className,
   children,
   plain = false,
+  variant,
+  delay,
+  stagger,
 }: {
-  as?: ElementType
+  as?: RevealTag
   className?: string
   children: ReactNode
-  /** Không dùng hiệu ứng mặc định, chỉ gắn data-shown */
   plain?: boolean
+  variant?: RevealVariant
+  delay?: number
+  stagger?: number
+}) {
+  if (!plain) {
+    return (
+      <MotionReveal as={as} className={className} variant={variant} delay={delay} stagger={stagger}>
+        {children}
+      </MotionReveal>
+    )
+  }
+  return (
+    <PlainReveal as={as} className={className}>
+      {children}
+    </PlainReveal>
+  )
+}
+
+function PlainReveal({
+  as: Tag,
+  className,
+  children,
+}: {
+  as: ElementType
+  className?: string
+  children: ReactNode
 }) {
   const ref = useRef<HTMLElement>(null)
   const [shown, setShown] = useState(false)
@@ -39,15 +71,7 @@ export function Reveal({
   }, [])
 
   return (
-    <Tag
-      ref={ref}
-      data-shown={shown ? '' : undefined}
-      className={cn(
-        !plain &&
-          'translate-y-6 opacity-0 transition duration-700 ease-out data-shown:translate-y-0 data-shown:opacity-100 motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none',
-        className,
-      )}
-    >
+    <Tag ref={ref} data-shown={shown ? '' : undefined} className={className}>
       {children}
     </Tag>
   )

@@ -8,7 +8,8 @@ Kế hoạch chi tiết: [docs/PLAN.md](docs/PLAN.md).
 
 - **Next.js 16** xuất site tĩnh (`output: 'export'`) → Firebase Hosting
 - **Cloud Firestore** (dữ liệu) + **Firebase Auth** (đăng nhập quản trị bằng Google), bảo vệ bằng `firestore.rules`
-- Cloudinary (ảnh/nhạc, upload thẳng từ trình duyệt), Tailwind v4, shadcn/ui, Motion (từ Phase C)
+- Cloudinary (ảnh/nhạc, upload thẳng từ trình duyệt), Tailwind v4, shadcn/ui
+- **Motion** (hiệu ứng) + **Lenis** (cuộn mượt)
 - Vitest, Firebase Emulator (test Security Rules), ESLint, Prettier
 
 ## Chạy ở máy local (không cần project Firebase)
@@ -45,6 +46,7 @@ npm run dev
 - http://localhost:3000/m/nam2027: khách nhà trai "Anh Nam"
 - http://localhost:3000/m/cohoa27: khách nhà gái "Cô Hoa và gia đình"
 - Thêm `?t=song-hy`, `?t=thanh-lich` hoặc `?t=hoa-co` để xem thử template khác.
+- Máy tắt hiệu ứng (Windows: _Settings → Accessibility → Visual effects → Animation effects_; điện thoại: _Giảm chuyển động_) thì thiệp mở ngay, không có hiệu ứng. Thêm `?motion=full` để luôn xem hiệu ứng (khung xem trước trong `/admin` đã bật sẵn).
 
 Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Hosting): tắt `npm run emulators`, rồi chạy `npm run preview` (build xong tự bật emulator, thiệp ở http://localhost:5005), sau đó chạy lại `npm run seed`.
 

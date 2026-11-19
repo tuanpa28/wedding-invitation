@@ -10,6 +10,13 @@ import {
   InvitationShell,
   OpenInvitationButton,
 } from '@/components/invitation/invitation-shell'
+import {
+  CurtainReveal,
+  GrowLine,
+  HeroItem,
+  MaskLine,
+  ParallaxImage,
+} from '@/components/invitation/motion'
 import { Reveal } from '@/components/invitation/reveal'
 import {
   eventDateParts,
@@ -25,6 +32,7 @@ import type { TemplateProps } from '../types'
 
 // Thanh Lịch — tối giản lạnh: mực navy, giấy trắng, xám sương.
 // Điểm nhấn: tờ lịch tháng cưới, ngày cưới được khoanh bằng nét bút tay.
+// Chuyển động tiết chế kiểu tạp chí: chữ trồi lên sau mặt nạ, ảnh mở như rèm, đường kẻ tự kéo dài.
 
 const sans = Be_Vietnam_Pro({
   weight: ['300', '400', '500', '600'],
@@ -66,6 +74,7 @@ export default function ThanhLichTemplate({
   return (
     <InvitationShell
       musicUrl={invitation.musicUrl}
+      openDuration={1300}
       style={palette}
       className={cn(
         sans.variable,
@@ -82,10 +91,14 @@ export default function ThanhLichTemplate({
           </p>
           <div>
             <p className="text-sm text-(--tl-slate)">Gửi</p>
-            <p className="mt-2 font-(family-name:--font-tl-serif) text-[2.6rem] leading-[1.15] italic">
+            <MaskLine
+              onOpen={false}
+              delay={0.2}
+              className="mt-2 font-(family-name:--font-tl-serif) text-[2.6rem] leading-[1.15] italic"
+            >
               {inviteeName(guest)}
-            </p>
-            <div className="mt-8 h-px w-16 bg-(--tl-ink)" />
+            </MaskLine>
+            <GrowLine className="mt-8 h-px w-16 bg-(--tl-ink)" />
             <p className="mt-8 text-base leading-relaxed">
               {couple[0].shortName} &amp; {couple[1].shortName}
               <br />
@@ -101,17 +114,19 @@ export default function ThanhLichTemplate({
 
       {/* ---------- Đầu thiệp ---------- */}
       <header className="mx-auto max-w-md px-8 pt-16">
-        <p className="text-[0.7rem] font-medium tracking-[0.45em] text-(--tl-slate) uppercase">
-          Chúng tôi kết hôn
-        </p>
+        <HeroItem delay={0.5} variant="fade">
+          <p className="text-[0.7rem] font-medium tracking-[0.45em] text-(--tl-slate) uppercase">
+            Chúng tôi kết hôn
+          </p>
+        </HeroItem>
         <h1 className="mt-8 font-(family-name:--font-tl-serif) text-[3.4rem] leading-[1.08] font-light italic">
-          {couple[0].shortName}
-          <span className="block">
+          <MaskLine delay={0.7}>{couple[0].shortName}</MaskLine>
+          <MaskLine delay={0.9}>
             <span className="font-(family-name:--font-tl-sans) text-4xl font-extralight not-italic">
               &amp;{' '}
             </span>
             {couple[1].shortName}
-          </span>
+          </MaskLine>
         </h1>
 
         <WeddingCalendar iso={featured.startAt} />
@@ -123,17 +138,19 @@ export default function ThanhLichTemplate({
       </header>
 
       <figure className="mx-auto mt-14 max-w-md">
-        <div className="relative aspect-[4/5] w-full">
-          <Image
-            src={invitation.cover.src}
-            alt={invitation.cover.alt}
-            fill
-            loading="eager"
-            fetchPriority="high"
-            sizes="(min-width: 448px) 448px, 100vw"
-            className="object-cover"
-          />
-        </div>
+        <CurtainReveal from="left">
+          <ParallaxImage className="aspect-[4/5] w-full" strength={36}>
+            <Image
+              src={invitation.cover.src}
+              alt={invitation.cover.alt}
+              fill
+              loading="eager"
+              fetchPriority="high"
+              sizes="(min-width: 448px) 448px, 100vw"
+              className="object-cover"
+            />
+          </ParallaxImage>
+        </CurtainReveal>
         {invitation.quote && (
           <figcaption className="px-8 pt-5 font-(family-name:--font-tl-serif) text-lg leading-relaxed text-(--tl-slate) italic">
             {invitation.quote}
@@ -229,7 +246,7 @@ export default function ThanhLichTemplate({
 
       {/* ---------- Lời cảm ơn ---------- */}
       <footer className="mx-auto max-w-md px-8 pt-20 pb-24">
-        <div className="h-px w-full bg-(--tl-ink)" />
+        <GrowLine className="h-px w-full bg-(--tl-ink)" />
         <p className="mt-10 font-(family-name:--font-tl-serif) text-3xl leading-snug italic">
           Cảm ơn vì đã cùng chúng tôi bắt đầu chương mới.
         </p>
@@ -253,7 +270,7 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
         <h2 className="shrink-0 text-[0.7rem] font-medium tracking-[0.45em] text-(--tl-slate) uppercase">
           {label}
         </h2>
-        <div className="h-px flex-1 bg-(--tl-mist)" />
+        <GrowLine className="h-px flex-1 bg-(--tl-mist)" />
       </div>
       {children}
     </section>

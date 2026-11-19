@@ -4,6 +4,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* motion-reduce: như mặc định, nhưng bỏ qua trong thiệp có data-motion="full" (?motion=full) */
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) {
+    &:not([data-motion='full'] *) {
+      @slot;
+    }
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -134,5 +143,72 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* ---------- Hiệu ứng thiệp (dùng chung các template) ---------- */
+
+/* Hạt rơi: cánh hoa / kim tuyến / lá (FallingParticles) */
+@keyframes th-fall {
+  from {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(var(--th-drift), 110vh, 0) rotate(var(--th-spin));
+  }
+}
+.th-particle {
+  animation: th-fall var(--th-duration) linear var(--th-delay) infinite;
+  will-change: transform;
+}
+
+/* Con dấu / phong bì "thở" nhẹ khi chờ khách bấm mở */
+@keyframes th-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgb(236 220 174 / 0));
+  }
+  50% {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 18px rgb(236 220 174 / 0.55));
+  }
+}
+@keyframes th-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .th-particle:not([data-motion='full'] *) {
+    display: none;
+  }
+  .th-breathe:not([data-motion='full'] *),
+  .th-float:not([data-motion='full'] *) {
+    animation: none !important;
+  }
+}
+.th-breathe {
+  animation: th-breathe 2.8s ease-in-out infinite;
+}
+.th-float {
+  animation: th-float 4.5s ease-in-out infinite;
+}
+
+/* Ánh sáng loé lên rồi tắt dần khi mở cổng (Song Hỷ) */
+@keyframes th-flash {
+  0% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
   }
 }

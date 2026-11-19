@@ -1,6 +1,7 @@
 'use client'
 
 import { Music, VolumeX } from 'lucide-react'
+import { LazyMotion, MotionConfig, useReducedMotion } from 'motion/react'
 import {
   createContext,
   use,
@@ -13,11 +14,14 @@ import {
   type ReactNode,
 } from 'react'
 import { cn } from '@/lib/utils'
+import { SmoothScroll } from './motion'
+
+const loadMotionFeatures = () => import('./motion-features').then((mod) => mod.default)
 
 /** closed: đang hiện phong bì · opening: đang chạy hiệu ứng mở · open: đã vào thiệp */
 export type InvitationPhase = 'closed' | 'opening' | 'open'
 
-/** Thời gian hiệu ứng mở phong bì (khớp với duration trong CSS của các template) */
+/** Thời gian mặc định của hiệu ứng mở phong bì (template truyền `openDuration` nếu khác) */
 export const OPEN_DURATION_MS = 1400
 
 type InvitationContextValue = {
@@ -26,6 +30,8 @@ type InvitationContextValue = {
   hasMusic: boolean
   playing: boolean
   toggleMusic: () => void
+  /** Có giảm chuyển động không (theo hệ điều hành, trừ khi URL có ?motion=full) */
+  reducedMotion: boolean
 }
 
 const InvitationContext = createContext<InvitationContextValue | null>(null)
@@ -36,8 +42,12 @@ export function useInvitation() {
   return ctx
 }
 
-function prefersReducedMotion() {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+/** ?motion=full: luôn chạy hiệu ứng kể cả khi máy bật "giảm chuyển động" (xem trước trong trang quản lý) */
+function readForceMotion() {
+  return (
+    typeof window !== 'undefined' &&
+    new URL(window.location.href).searchParams.get('motion') === 'full'
+  )
 }
 
 /**
@@ -50,16 +60,22 @@ export function InvitationShell({
   className,
   style,
   musicButtonClassName,
+  openDuration = OPEN_DURATION_MS,
   children,
 }: {
   musicUrl?: string
   className?: string
   style?: CSSProperties
   musicButtonClassName?: string
+  /** Thời gian (ms) từ lúc bấm mở tới khi gỡ phong bì, khớp hiệu ứng của template */
+  openDuration?: number
   children: ReactNode
 }) {
   const [phase, setPhase] = useState<InvitationPhase>('closed')
   const [playing, setPlaying] = useState(false)
+  const [forceMotion] = useState(readForceMotion)
+  const systemReduced = useReducedMotion() ?? false
+  const reducedMotion = systemReduced && !forceMotion
   const audioRef = useRef<HTMLAudioElement>(null)
 
   // Khoá cuộn trang khi phong bì đang che
@@ -83,8 +99,8 @@ export function InvitationShell({
     window.scrollTo(0, 0)
     setPhase('opening')
     playMusic()
-    window.setTimeout(() => setPhase('open'), prefersReducedMotion() ? 0 : OPEN_DURATION_MS)
-  }, [phase, playMusic])
+    window.setTimeout(() => setPhase('open'), reducedMotion ? 0 : openDuration)
+  }, [phase, playMusic, openDuration, reducedMotion])
 
   const toggleMusic = useCallback(() => {
     const audio = audioRef.current
@@ -94,28 +110,38 @@ export function InvitationShell({
   }, [playMusic])
 
   const value = useMemo(
-    () => ({ phase, open, hasMusic: Boolean(musicUrl), playing, toggleMusic }),
-    [phase, open, musicUrl, playing, toggleMusic],
+    () => ({ phase, open, hasMusic: Boolean(musicUrl), playing, toggleMusic, reducedMotion }),
+    [phase, open, musicUrl, playing, toggleMusic, reducedMotion],
   )
 
   return (
     <InvitationContext value={value}>
-      <div data-phase={phase} className={cn('group/inv relative', className)} style={style}>
-        {children}
-        {musicUrl && (
-          <>
-            <audio
-              ref={audioRef}
-              src={musicUrl}
-              preload="none"
-              loop
-              onPlay={() => setPlaying(true)}
-              onPause={() => setPlaying(false)}
-            />
-            {phase === 'open' && <MusicToggle className={musicButtonClassName} />}
-          </>
-        )}
-      </div>
+      <LazyMotion features={loadMotionFeatures} strict>
+        <MotionConfig reducedMotion={forceMotion ? 'never' : 'user'}>
+          <SmoothScroll enabled={phase === 'open' && !reducedMotion} />
+          <div
+            data-phase={phase}
+            data-motion={forceMotion ? 'full' : undefined}
+            className={cn('group/inv relative', className)}
+            style={style}
+          >
+            {children}
+            {musicUrl && (
+              <>
+                <audio
+                  ref={audioRef}
+                  src={musicUrl}
+                  preload="none"
+                  loop
+                  onPlay={() => setPlaying(true)}
+                  onPause={() => setPlaying(false)}
+                />
+                {phase === 'open' && <MusicToggle className={musicButtonClassName} />}
+              </>
+            )}
+          </div>
+        </MotionConfig>
+      </LazyMotion>
     </InvitationContext>
   )
 }

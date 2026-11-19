@@ -10,6 +10,12 @@ import {
   InvitationShell,
   OpenInvitationButton,
 } from '@/components/invitation/invitation-shell'
+import {
+  AnimatedText,
+  FallingParticles,
+  HeroItem,
+  ParallaxImage,
+} from '@/components/invitation/motion'
 import { Reveal } from '@/components/invitation/reveal'
 import {
   eventDateParts,
@@ -23,7 +29,8 @@ import { cn } from '@/lib/utils'
 import type { TemplateProps } from '../types'
 
 // Hoa Cỏ — pastel đồng quê: xanh lá xám, hồng phấn, tím bằng lăng.
-// Điểm nhấn: cành hoa dại vẽ nét, tự "mọc" khi cuộn tới.
+// Điểm nhấn: cành hoa dại vẽ nét, tự "mọc" khi cuộn tới. Phong bì bồng bềnh; bấm con dấu
+// thì vạt thư lật lên, tấm thiệp trượt ra, tên hiện như viết tay, cánh hoa và lá bay.
 
 const script = Dancing_Script({
   subsets: ['latin', 'vietnamese'],
@@ -67,6 +74,7 @@ export default function HoaCoTemplate({
   return (
     <InvitationShell
       musicUrl={invitation.musicUrl}
+      openDuration={1700}
       style={palette}
       className={cn(
         script.variable,
@@ -76,7 +84,7 @@ export default function HoaCoTemplate({
       musicButtonClassName="bg-(--hc-leaf) text-(--hc-card) focus-visible:ring-(--hc-lilac)"
     >
       {/* ---------- Phong bì có con dấu sáp ---------- */}
-      <CoverOverlay className="bg-(--hc-bg) transition-opacity delay-500 duration-700 group-data-[phase=opening]/inv:opacity-0 motion-reduce:transition-none">
+      <CoverOverlay className="bg-(--hc-bg) transition-opacity delay-[1000ms] duration-700 group-data-[phase=opening]/inv:opacity-0 motion-reduce:transition-none">
         <div className="flex h-full flex-col items-center justify-center gap-10 px-6 text-center">
           <div>
             <p className="text-sm tracking-[0.3em] text-(--hc-moss) uppercase">Gửi tới</p>
@@ -85,12 +93,18 @@ export default function HoaCoTemplate({
             </p>
           </div>
 
-          <div className="relative aspect-[3/2] w-[min(80vw,340px)] [perspective:900px]">
+          <div className="th-float relative aspect-[3/2] w-[min(80vw,340px)] [perspective:900px] group-data-[phase=opening]/inv:[animation-play-state:paused]">
             <div className="absolute inset-0 rounded-lg bg-(--hc-blush) shadow-[0_18px_40px_-20px_rgba(74,94,66,0.55)]" />
-            {/* Hai vạt bên + vạt dưới */}
-            <div className="absolute inset-0 rounded-lg bg-(--hc-blush-deep)/45 [clip-path:polygon(0_0,50%_55%,0_100%)]" />
-            <div className="absolute inset-0 rounded-lg bg-(--hc-blush-deep)/45 [clip-path:polygon(100%_0,50%_55%,100%_100%)]" />
-            <div className="absolute inset-0 rounded-lg bg-(--hc-blush-deep)/25 [clip-path:polygon(0_100%,50%_50%,100%_100%)]" />
+            {/* Tấm thiệp bên trong: trượt lên khỏi phong bì sau khi vạt trên lật */}
+            <div className="absolute inset-x-[9%] top-[10%] h-[82%] rounded-md bg-(--hc-card) shadow-[0_6px_16px_-8px_rgba(54,65,47,0.45)] transition-transform delay-[450ms] duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[phase=opening]/inv:-translate-y-[78%] motion-reduce:transition-none">
+              <p className="pt-3 text-center font-(family-name:--font-hc-script) text-xl text-(--hc-leaf)">
+                Thiệp mời
+              </p>
+            </div>
+            {/* Hai vạt bên + vạt dưới (màu đặc để che tấm thiệp bên trong) */}
+            <div className="absolute inset-0 rounded-lg bg-[#e3b8ae] [clip-path:polygon(0_0,50%_55%,0_100%)]" />
+            <div className="absolute inset-0 rounded-lg bg-[#e3b8ae] [clip-path:polygon(100%_0,50%_55%,100%_100%)]" />
+            <div className="absolute inset-0 rounded-lg bg-[#e6bfb6] [clip-path:polygon(0_100%,50%_50%,100%_100%)]" />
             {/* Vạt trên — lật lên khi mở */}
             <div className="absolute inset-x-0 top-0 z-10 h-[58%] origin-top rounded-t-lg bg-(--hc-blush-deep) transition-transform duration-700 ease-out [clip-path:polygon(0_0,100%_0,50%_100%)] group-data-[phase=opening]/inv:[transform:rotateX(180deg)] motion-reduce:transition-none" />
             <OpenInvitationButton className="absolute top-[58%] left-1/2 z-20 grid size-[4.5rem] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-(--hc-lilac) text-(--hc-card) shadow-[inset_0_-4px_0_rgba(0,0,0,0.12),0_6px_14px_-6px_rgba(54,65,47,0.6)] transition group-data-[phase=opening]/inv:scale-0 hover:scale-105 focus-visible:ring-2 focus-visible:ring-(--hc-leaf) focus-visible:ring-offset-4 focus-visible:ring-offset-(--hc-bg) focus-visible:outline-none motion-reduce:transition-none">
@@ -107,24 +121,34 @@ export default function HoaCoTemplate({
       <Reveal plain as="header" className="group/grow relative px-6 pt-16 pb-14 text-center">
         <Sprig className="absolute top-28 -left-7 h-48 w-24 -scale-x-100" />
         <Sprig className="absolute top-28 -right-7 h-48 w-24" />
-        <p className="text-xs tracking-[0.35em] text-(--hc-moss) uppercase">Ngày chung đôi</p>
+        <HeroItem delay={0.9} variant="fade">
+          <p className="text-xs tracking-[0.35em] text-(--hc-moss) uppercase">Ngày chung đôi</p>
+        </HeroItem>
         <h1 className="relative mt-5 font-(family-name:--font-hc-script) text-6xl leading-[1.2] text-(--hc-leaf)">
-          {couple[0].shortName}
-          <span className="block text-4xl text-(--hc-lilac)">&amp;</span>
-          {couple[1].shortName}
+          <AnimatedText mode="write" text={couple[0].shortName} delay={1.1} className="block" />
+          <HeroItem delay={1.9} variant="zoom" className="block text-4xl text-(--hc-lilac)">
+            &amp;
+          </HeroItem>
+          <AnimatedText mode="write" text={couple[1].shortName} delay={2.1} className="block" />
         </h1>
 
-        <div className="relative mx-auto mt-10 aspect-[3/4] w-56 overflow-hidden rounded-[50%] border-[6px] border-(--hc-card) shadow-[0_20px_40px_-24px_rgba(74,94,66,0.7)]">
-          <Image
-            src={invitation.cover.src}
-            alt={invitation.cover.alt}
-            fill
-            loading="eager"
-            fetchPriority="high"
-            sizes="224px"
-            className="object-cover"
-          />
-        </div>
+        <HeroItem
+          delay={1.3}
+          variant="zoom"
+          className="relative mx-auto mt-10 aspect-[3/4] w-56 overflow-hidden rounded-[50%] border-[6px] border-(--hc-card) shadow-[0_20px_40px_-24px_rgba(74,94,66,0.7)]"
+        >
+          <ParallaxImage className="size-full rounded-[50%]" strength={20} delay={1.3}>
+            <Image
+              src={invitation.cover.src}
+              alt={invitation.cover.alt}
+              fill
+              loading="eager"
+              fetchPriority="high"
+              sizes="224px"
+              className="object-cover"
+            />
+          </ParallaxImage>
+        </HeroItem>
 
         <div className="mx-auto mt-10 grid max-w-xs grid-cols-3 items-center text-sm">
           <span>{date.weekday}</span>
@@ -213,7 +237,11 @@ export default function HoaCoTemplate({
             <Heading className="mb-6 pt-4">Chuyện tình mình</Heading>
             <div className="space-y-10">
               {invitation.story.map((item, i) => (
-                <Reveal key={item.title} className="text-center">
+                <Reveal
+                  key={item.title}
+                  variant={i % 2 === 0 ? 'left' : 'right'}
+                  className="text-center"
+                >
                   {item.photo && (
                     <Image
                       src={item.photo.src}
@@ -273,6 +301,11 @@ export default function HoaCoTemplate({
           Thiệp Hồng
         </p>
       </Reveal>
+      <FallingParticles
+        shapes={['petal', 'leaf', 'petal']}
+        colors={['#e8c3bb', '#b4a2cf', '#91a584', '#d9a89e']}
+        count={12}
+      />
     </InvitationShell>
   )
 }

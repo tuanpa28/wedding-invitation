@@ -9,6 +9,12 @@ import {
   InvitationShell,
   OpenInvitationButton,
 } from '@/components/invitation/invitation-shell'
+import {
+  AnimatedText,
+  FallingParticles,
+  HeroItem,
+  ParallaxImage,
+} from '@/components/invitation/motion'
 import { Reveal } from '@/components/invitation/reveal'
 import {
   eventDateParts,
@@ -22,7 +28,8 @@ import { cn } from '@/lib/utils'
 import type { TemplateProps } from '../types'
 
 // Song Hỷ — truyền thống: son mài đỏ thẫm, vàng kim nhạt, giấy dó.
-// Điểm nhấn: phong bì là hai cánh cổng, con dấu 囍 chia đôi khi mở.
+// Điểm nhấn: phong bì là hai cánh cổng, con dấu 囍 chia đôi; bấm mở thì cổng xoay mở (3D),
+// ánh vàng loé ra, tên cô dâu chú rể hiện từng chữ, kim tuyến và cánh hoa đỏ rơi.
 
 const display = Prata({
   weight: '400',
@@ -68,6 +75,7 @@ export default function SongHyTemplate({
   return (
     <InvitationShell
       musicUrl={invitation.musicUrl}
+      openDuration={1700}
       style={palette}
       className={cn(
         display.variable,
@@ -78,10 +86,20 @@ export default function SongHyTemplate({
     >
       {/* ---------- Phong bì: hai cánh cổng ---------- */}
       <CoverOverlay>
-        <div className="absolute inset-0 flex">
+        {/* Ánh vàng phía sau cổng, loé lên khi cổng mở */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[radial-gradient(60%_45%_at_50%_50%,#f7e7b4_0%,#d3b064_35%,var(--sh-lacquer-deep)_75%)] opacity-0 group-data-[phase=opening]/inv:animate-[th-flash_1.7s_ease-out_forwards] motion-reduce:hidden"
+        />
+        <div className="absolute inset-0 flex [perspective:1600px]">
           <Door side="left" />
           <Door side="right" />
         </div>
+        {/* Quầng sáng "thở" quanh con dấu khi chờ bấm mở */}
+        <div
+          aria-hidden
+          className="th-breathe pointer-events-none absolute top-1/2 left-1/2 z-10 -mt-[5.5rem] -ml-[5.5rem] size-44 rounded-full border border-(--sh-gold-pale)/40 transition-opacity duration-300 group-data-[phase=opening]/inv:opacity-0"
+        />
         <div className="relative z-10 flex h-full flex-col items-center justify-between px-6 py-[12svh] text-center transition-opacity duration-500 group-data-[phase=opening]/inv:opacity-0 motion-reduce:transition-none">
           <div>
             <p className="text-xs tracking-[0.35em] text-(--sh-gold-pale)/80 uppercase">
@@ -105,17 +123,27 @@ export default function SongHyTemplate({
       {/* ---------- Đầu thiệp ---------- */}
       <header className={cn(lacquerBg, 'px-6 pt-16 pb-14 text-center text-(--sh-gold-pale)')}>
         <div className="mx-auto max-w-md">
-          <p className="text-xs tracking-[0.4em] text-(--sh-gold)/90 uppercase">Thư mời cưới</p>
+          <HeroItem delay={0.7} variant="fade">
+            <p className="text-xs tracking-[0.4em] text-(--sh-gold)/90 uppercase">Thư mời cưới</p>
+          </HeroItem>
           <h1 className="mt-6 font-(family-name:--font-sh-display) text-[2.75rem] leading-[1.2] text-(--sh-gold)">
-            {couple[0].shortName}
-            <span className="block py-1 font-(family-name:--font-sh-body) text-3xl text-(--sh-gold-pale) italic">
+            <AnimatedText text={couple[0].shortName} delay={0.9} className="block" />
+            <HeroItem
+              delay={1.35}
+              variant="zoom"
+              className="block py-1 font-(family-name:--font-sh-body) text-3xl text-(--sh-gold-pale) italic"
+            >
               &amp;
-            </span>
-            {couple[1].shortName}
+            </HeroItem>
+            <AnimatedText text={couple[1].shortName} delay={1.5} className="block" />
           </h1>
 
-          <div className="mx-auto mt-10 w-64 rounded-t-full border border-(--sh-gold)/70 p-2">
-            <div className="relative aspect-[3/4] overflow-hidden rounded-t-full">
+          <HeroItem
+            delay={0.8}
+            variant="zoom"
+            className="mx-auto mt-10 w-64 rounded-t-full border border-(--sh-gold)/70 p-2"
+          >
+            <ParallaxImage className="aspect-[3/4] rounded-t-full" strength={24} delay={0.8}>
               <Image
                 src={invitation.cover.src}
                 alt={invitation.cover.alt}
@@ -125,22 +153,26 @@ export default function SongHyTemplate({
                 sizes="256px"
                 className="object-cover"
               />
-            </div>
-          </div>
+            </ParallaxImage>
+          </HeroItem>
 
-          <p className="mt-10 font-(family-name:--font-sh-display) text-2xl tracking-[0.2em] text-(--sh-gold)">
-            {date.day} · {date.month} · {date.year}
-          </p>
-          <p className="mt-2 text-base">
-            {date.weekday}, {date.time}
-          </p>
-          {featured.lunarText && (
-            <p className="mt-1 text-sm text-(--sh-gold-pale)/75 italic">{featured.lunarText}</p>
-          )}
-          {invitation.quote && (
-            <p className="mx-auto mt-8 max-w-xs text-lg leading-relaxed italic">
-              “{invitation.quote}”
+          <HeroItem delay={1.9}>
+            <p className="mt-10 font-(family-name:--font-sh-display) text-2xl tracking-[0.2em] text-(--sh-gold)">
+              {date.day} · {date.month} · {date.year}
             </p>
+            <p className="mt-2 text-base">
+              {date.weekday}, {date.time}
+            </p>
+            {featured.lunarText && (
+              <p className="mt-1 text-sm text-(--sh-gold-pale)/75 italic">{featured.lunarText}</p>
+            )}
+          </HeroItem>
+          {invitation.quote && (
+            <HeroItem delay={2.2}>
+              <p className="mx-auto mt-8 max-w-xs text-lg leading-relaxed italic">
+                “{invitation.quote}”
+              </p>
+            </HeroItem>
           )}
         </div>
       </header>
@@ -188,7 +220,7 @@ export default function SongHyTemplate({
 
       {/* ---------- Đếm ngược ---------- */}
       <section className={cn(lacquerBg, 'px-6 py-14 text-center text-(--sh-gold-pale)')}>
-        <Reveal className="mx-auto max-w-md">
+        <Reveal variant="zoom" className="mx-auto max-w-md">
           <p className="text-xs tracking-[0.35em] text-(--sh-gold) uppercase">Còn lại</p>
           <Countdown
             target={featured.startAt}
@@ -242,7 +274,7 @@ export default function SongHyTemplate({
           <Heading>Chuyện của chúng mình</Heading>
           <ol className="relative mt-10 space-y-10 border-l border-(--sh-gold) pl-6">
             {invitation.story.map((item) => (
-              <Reveal as="li" key={item.title} className="relative">
+              <Reveal as="li" variant="left" key={item.title} className="relative">
                 <span
                   aria-hidden
                   className="absolute top-1.5 -left-[1.95rem] size-3 rotate-45 border border-(--sh-gold) bg-(--sh-red)"
@@ -299,6 +331,11 @@ export default function SongHyTemplate({
       <footer className="bg-(--sh-lacquer-deep) py-6 text-center text-xs text-(--sh-gold-pale)/60">
         Thiệp Hồng
       </footer>
+      <FallingParticles
+        shapes={['spark', 'petal', 'spark']}
+        colors={['#e8cf8a', '#b3261a', '#f4e3b0']}
+        count={14}
+      />
     </InvitationShell>
   )
 }
@@ -317,10 +354,11 @@ function Door({ side }: { side: 'left' | 'right' }) {
     <div
       className={cn(
         lacquerBg,
-        'relative h-full w-1/2 overflow-hidden transition-transform duration-[1300ms] ease-[cubic-bezier(0.65,0,0.25,1)] motion-reduce:transition-none',
+        // Cánh cổng xoay quanh bản lề ở mép ngoài (3D), con dấu tách đôi theo mép giữa
+        'relative h-full w-1/2 overflow-hidden transition-[transform,filter] delay-150 duration-[1500ms] ease-[cubic-bezier(0.7,0,0.2,1)] [backface-visibility:hidden] motion-reduce:transition-none',
         left
-          ? 'group-data-[phase=opening]/inv:-translate-x-full'
-          : 'group-data-[phase=opening]/inv:translate-x-full',
+          ? 'origin-left group-data-[phase=opening]/inv:[transform:rotateY(-108deg)] group-data-[phase=opening]/inv:brightness-50'
+          : 'origin-right group-data-[phase=opening]/inv:[transform:rotateY(108deg)] group-data-[phase=opening]/inv:brightness-50',
       )}
     >
       {/* Khung chỉ vàng, hở ở mép giữa hai cánh */}
@@ -400,7 +438,7 @@ function Ornament({ className }: { className?: string }) {
 
 function Heading({ children, tone = 'red' }: { children: ReactNode; tone?: 'red' | 'gold' }) {
   return (
-    <div className="text-center">
+    <Reveal variant="blur" className="text-center">
       <h2
         className={cn(
           'font-(family-name:--font-sh-display) text-3xl',
@@ -410,7 +448,7 @@ function Heading({ children, tone = 'red' }: { children: ReactNode; tone?: 'red'
         {children}
       </h2>
       <Ornament className="mx-auto mt-3 w-32" />
-    </div>
+    </Reveal>
   )
 }
 

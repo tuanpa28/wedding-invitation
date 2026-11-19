@@ -44,7 +44,8 @@ export function WeddingEditor({ initial }: { initial: WeddingDoc | null }) {
     setVersion((v) => v + 1)
   }
 
-  const previewHref = `/?preview${side === 'all' ? '' : `&side=${side}`}`
+  // ?motion=full: luôn chạy hiệu ứng như trên điện thoại của khách, kể cả khi máy này tắt hiệu ứng
+  const previewHref = `/?preview&motion=full${side === 'all' ? '' : `&side=${side}`}`
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">

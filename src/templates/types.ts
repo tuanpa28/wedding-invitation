@@ -1,11 +1,10 @@
-import type { ComponentType } from 'react'
 import {
   coupleOrder,
   eventsForSide,
   featuredEvent,
   type CalendarCouple,
 } from '@/lib/invitation/helpers'
-import type { Guest, Invitation, Person, TemplateId, WeddingEvent } from '@/lib/invitation/types'
+import type { Guest, Invitation, Person, WeddingEvent } from '@/lib/invitation/types'
 
 /** Dữ liệu đã xử lý sẵn cho template (lọc sự kiện theo bên khách, thứ tự tên, ...) */
 export interface TemplateProps {
@@ -18,13 +17,6 @@ export interface TemplateProps {
   /** [người đứng trước, người đứng sau] theo bên của khách */
   couple: [Person, Person]
   calendarCouple: CalendarCouple
-}
-
-export interface TemplateDefinition {
-  id: TemplateId
-  name: string
-  description: string
-  Component: ComponentType<TemplateProps>
 }
 
 export function buildTemplateProps(invitation: Invitation, guest?: Guest): TemplateProps {

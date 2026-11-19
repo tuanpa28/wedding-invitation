@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import {
   fetchGuest,
   fetchInvitation,
@@ -10,8 +10,29 @@ import {
 import { eventsForSide, isTemplateId } from '@/lib/invitation/helpers'
 import type { Invitation } from '@/lib/invitation/types'
 import { guestCodeFromPath } from '@/lib/invitation/validation'
-import { TEMPLATES } from '@/templates'
+import { TEMPLATE_COMPONENTS } from '@/templates'
 import { buildTemplateProps } from '@/templates/types'
+
+type LoadResult = [Invitation | null, GuestWithOpenState | null]
+
+/**
+ * Bắt đầu đọc Firestore ngay khi file JS này chạy trong trình duyệt (không đợi React render xong)
+ * để thiệp hiện sớm hơn. Mỗi lần tải trang chỉ đọc một lần.
+ */
+let pending: { mode: string; promise: Promise<LoadResult> } | undefined
+function loadData(mode: 'general' | 'guest'): Promise<LoadResult> {
+  if (pending?.mode === mode) return pending.promise
+  const url = new URL(window.location.href)
+  // ?k=<mã> thay cho /m/<mã> khi chạy next dev
+  const code =
+    mode === 'guest' ? (guestCodeFromPath(url.pathname) ?? url.searchParams.get('k')) : null
+  const promise = Promise.all([fetchInvitation(), code ? fetchGuest(code) : null])
+  pending = { mode, promise }
+  return promise
+}
+if (typeof window !== 'undefined') {
+  void loadData(window.location.pathname.startsWith('/m') ? 'guest' : 'general').catch(() => {})
+}
 
 type State =
   | { status: 'loading' }
@@ -31,11 +52,8 @@ export function InvitationApp({ mode }: { mode: 'general' | 'guest' }) {
   useEffect(() => {
     let active = true
     const url = new URL(window.location.href)
-    // ?t=hoa-co để xem thử template khác; ?k=<mã> thay cho /m/<mã> khi chạy next dev
-    const code =
-      mode === 'guest' ? (guestCodeFromPath(url.pathname) ?? url.searchParams.get('k')) : null
-
-    Promise.all([fetchInvitation(), code ? fetchGuest(code) : null])
+    // ?t=hoa-co để xem thử template khác
+    loadData(mode)
       .then(([invitation, guest]) => {
         if (!active) return
         setTemplateOverride(url.searchParams.get('t'))
@@ -63,8 +81,12 @@ export function InvitationApp({ mode }: { mode: 'general' | 'guest' }) {
   if (eventsForSide(invitation.events, guest?.side).length === 0) {
     return <InvitationMissing reason="no-wedding" />
   }
-  const { Component } = TEMPLATES[templateId]
-  return <Component {...buildTemplateProps(invitation, guest ?? undefined)} />
+  const Template = TEMPLATE_COMPONENTS[templateId]
+  return (
+    <Suspense fallback={<InvitationLoading />}>
+      <Template {...buildTemplateProps(invitation, guest ?? undefined)} />
+    </Suspense>
+  )
 }
 
 /** Trang quản lý xem trước như khách một bên: /?preview&side=groom|bride */

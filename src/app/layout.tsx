@@ -36,6 +36,10 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       lang="vi"
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
+      <head>
+        {/* Thiệp đọc nội dung từ Firestore ngay khi mở → mở kết nối sớm */}
+        <link rel="preconnect" href="https://firestore.googleapis.com" crossOrigin="anonymous" />
+      </head>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   )
