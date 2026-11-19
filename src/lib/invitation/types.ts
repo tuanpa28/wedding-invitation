@@ -70,3 +70,18 @@ export interface Invitation {
   gallery: Photo[]
   musicUrl?: string
 }
+
+/** Document site/wedding trong Firestore: nội dung thiệp (một đám cưới duy nhất) */
+export type WeddingDoc = Omit<Invitation, 'slug' | 'cover'> & {
+  /** Chưa có ảnh bìa → dùng ảnh bìa mặc định */
+  cover?: Photo
+}
+
+/** Document guests/{code}. Thời điểm mở lưu dạng Timestamp của Firestore. */
+export interface GuestDoc {
+  side: Side
+  displayName: string
+  group?: string
+  maxAttendees?: number
+  openCount?: number
+}

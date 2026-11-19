@@ -1,13 +1,22 @@
 import type { NextConfig } from 'next'
 
+const isDev = process.env.NODE_ENV === 'development'
+
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Xuất site tĩnh vào out/ để đưa lên Firebase Hosting (gói Spark không chạy được server)
+  output: 'export',
   images: {
-    // Ảnh cặp đôi upload nằm trên Cloudinary (resize qua loader trong WeddingImage)
-    remotePatterns: [{ protocol: 'https', hostname: 'res.cloudinary.com' }],
+    // Không có server tối ưu ảnh: ảnh Cloudinary resize qua URL, ảnh trong public/ dùng nguyên
+    loader: 'custom',
+    loaderFile: './src/lib/image-loader.ts',
   },
+  // Trên Firebase Hosting, /m/** được rewrite sang /m.html (firebase.json).
+  // Khi chạy next dev thì làm việc đó ở đây.
+  ...(isDev && {
+    async rewrites() {
+      return [{ source: '/m/:code', destination: '/m' }]
+    },
+  }),
   turbopack: {
     rules: {
       '*.css': {

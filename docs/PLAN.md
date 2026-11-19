@@ -1,213 +1,120 @@
-# Plan v3: Thiệp Hồng — Next.js (FE + API) trên Vercel
+# Kế hoạch v4: Thiệp Hồng — một đám cưới, Next.js tĩnh + Firebase (gói Spark, 0đ)
 
-## Context
+> Bản v3 (nhiều cặp đôi, Postgres, Vercel) nằm trong lịch sử git (commit `105f9f0`). v4 đổi hướng theo yêu cầu ngày 19/11/2026.
 
-Bạn đổi hướng: dùng **Next.js** cho cả giao diện lẫn API (Route Handlers), không tách app riêng nữa. Host trên **Vercel + Neon Postgres**. Code Phase 0a cũ (React + Vite + Hono + Cloudflare) vẫn giữ trong lịch sử git (commit `faf0244`). Working tree sẽ được dọn và dựng lại từ đầu bằng Next.js, rồi tạo commit mới.
+## 1. Yêu cầu
 
-Yêu cầu giữ nguyên: nền tảng cho **nhiều cặp đôi**, đám cưới **2 bên nhà trai/nhà gái**, có RSVP + lời chúc, link riêng cho từng khách, trang quản lý, QR mừng cưới. **0đ**, **không gửi email**, **không thu phí**, làm **từng phase**, test ổn mới qua phase tiếp. Tên: **Thiệp Hồng**.
+- **Chỉ một đám cưới.** Nhà trai và nhà gái tổ chức lễ riêng.
+- **Trang quản lý:** sửa nội dung thiệp, chọn/đổi template bất cứ lúc nào, tạo link riêng cho từng khách.
+- **Trang thiệp cho từng khách:** có tên khách, chỉ hiện sự kiện của bên khách.
+- **3 template có animation hiện đại:** giữ Song Hỷ / Thanh Lịch / Hoa Cỏ và nâng cấp hiệu ứng.
+- **Chức năng thêm:** RSVP, sổ lưu bút realtime, QR mừng cưới, theo dõi khách đã mở thiệp.
+- **Deploy:** Firebase gói **Spark** (miễn phí, không cần thẻ). Ảnh và nhạc lưu trên **Cloudinary** free.
 
----
+## 2. Công nghệ
 
-## 1. Công nghệ
+| Phần       | Chọn                                                                                                                    |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Framework  | **Next.js 16** xuất trang tĩnh (`output: 'export'`), React 19, TypeScript                                               |
+| Giao diện  | Tailwind v4, shadcn/ui (trang quản lý)                                                                                  |
+| Animation  | **Motion** (`motion/react`): mở thiệp, chữ hiện dần, parallax. **Lenis** cho cuộn mượt.                                 |
+| Dữ liệu    | **Cloud Firestore**, gọi thẳng từ trình duyệt bằng Firebase JS SDK, bảo vệ bằng Security Rules                          |
+| Đăng nhập  | **Firebase Auth** (Google), chỉ các email trong danh sách quản trị                                                      |
+| Ảnh / nhạc | **Cloudinary**: upload preset _unsigned_ giới hạn thư mục/định dạng, ảnh resize qua URL                                 |
+| Form       | react-hook-form + zod                                                                                                   |
+| Excel      | `read-excel-file` / `write-excel-file` (nhẹ)                                                                            |
+| QR         | `qrcode` (QR link khách), VietQR `img.vietqr.io` (QR mừng cưới)                                                         |
+| Hosting    | **Firebase Hosting** (CDN, HTTPS, tên miền `*.web.app`)                                                                 |
+| Test       | Vitest (logic), **Firebase Emulator** + `@firebase/rules-unit-testing` (Security Rules), Playwright (E2E trên emulator) |
 
-| Thành phần   | Chọn                                                                                             | Free tier                                  |
-| ------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------ |
-| Framework    | **Next.js 16** (App Router) + TypeScript 6                                                       | —                                          |
-| Giao diện    | Tailwind v4 + shadcn/ui (dashboard), CSS animation cho thiệp                                     | —                                          |
-| API          | **Next.js Route Handlers** `src/app/api/**/route.ts`                                             | chạy trong Vercel Functions                |
-| Database     | **Postgres**: local chạy bằng Docker, production dùng **Neon**                                   | Neon: 0.5 GB, tự ngủ khi không có truy cập |
-| ORM          | **Drizzle ORM** + driver `pg` (dùng chung một driver cho local và Neon) + drizzle-kit migrations | —                                          |
-| Đăng nhập    | **Better Auth**: chỉ Google login, session lưu trong Postgres                                    | free, không cần email                      |
-| Ảnh / nhạc   | **Cloudinary**: trình duyệt upload thẳng lên, API chỉ ký chữ ký upload                           | 25 credits/tháng                           |
-| Hosting      | **Vercel Hobby**, mỗi nhánh có link preview riêng                                                | free (không thu phí nên dùng Hobby hợp lệ) |
-| Chống spam   | Honeypot + Cloudflare Turnstile + giới hạn số lần gửi theo IP (lưu trong DB)                     | free                                       |
-| QR mừng cưới | VietQR (`img.vietqr.io`)                                                                         | free                                       |
-| Test         | Vitest (logic + API trên Postgres test) và Playwright (e2e, Phase 3+)                            | —                                          |
-| Lint/format  | ESLint + Prettier                                                                                | —                                          |
+**Vì sao xuất trang tĩnh:** gói Spark không có Cloud Functions/App Hosting nên không chạy được Next.js phía server. Mọi trang là HTML/JS tĩnh; dữ liệu đọc/ghi Firestore từ trình duyệt.
 
-**Rút kinh nghiệm từ Phase 0a:**
+**Hệ quả:**
 
-- **Không dùng oxlint/Biome:** chính sách Application Control của Windows chặn file native của oxlint.
-- **Ghim TypeScript 6:** typescript-eslint chưa hỗ trợ TS 7.
-- **npm 11 chặn script cài đặt:** các package cần chạy script lúc cài phải được cho phép qua `allowScripts`.
-- **Chạy dev server bằng launch config của app.** Trước khi đổi cấu trúc thư mục, phải dừng dev server của bạn (Vite từng khoá thư mục).
+- Ảnh preview khi gửi link qua Zalo/Messenger là ảnh chung của thiệp, không có tên từng khách.
+- Không có API riêng. Mọi quyền nằm trong `firestore.rules` và được test bằng emulator.
 
----
+## 3. Đường dẫn
 
-## 2. Kiến trúc: FE và BE trong một app Next.js, tách theo lớp
+| URL             | Trang                                                                                     |
+| --------------- | ----------------------------------------------------------------------------------------- |
+| `/`             | Thiệp, link chung: hiện sự kiện cả hai bên                                                |
+| `/m/<mã-khách>` | Thiệp riêng của khách. Firebase Hosting rewrite `/m/**` → `/m.html`, trang đọc mã từ URL. |
+| `/admin`        | Trang quản lý (đăng nhập Google)                                                          |
 
-```
-Trình duyệt ──► Next.js (Vercel)
-                 ├─ Pages (Server Components): thiệp /[slug], dashboard, admin
-                 │     └─ đọc dữ liệu: gọi thẳng src/server/services (không tự gọi HTTP chính mình)
-                 ├─ API Route Handlers /api/*: mọi thao tác ghi (RSVP, lời chúc, CRUD dashboard, tracking, ký upload)
-                 │     └─ validate bằng zod → gọi src/server/services
-                 └─ src/server/** (BE): services, db, auth, phân quyền — import 'server-only'
-                          │                     │
-                          ▼                     ▼
-                    Postgres (Neon)        Cloudinary
-```
+## 4. Dữ liệu Firestore
 
-- **Tách FE/BE trong cùng repo:**
-  - `src/server/` là backend thuần, có `import 'server-only'` nên bị chặn nếu lỡ import vào code client.
-  - `src/app/api/` chỉ là lớp HTTP mỏng.
-  - `src/lib/validators` chứa schema zod dùng chung cho form FE và API.
-- **Thao tác ghi đều đi qua API** (fetch + TanStack Query ở dashboard). Không dùng Server Actions, để API rõ ràng và test được.
-- **Thiệp khách mời:**
-  - Render phía server.
-  - Cache theo tag; khi cặp đôi sửa thì gọi `revalidateTag` để khách thấy ngay.
-  - `generateMetadata` + `opengraph-image.tsx` tạo ảnh preview có tên khách khi share lên Zalo/Messenger.
-- **Đa cặp đôi theo path:** `/tuan-lan` là thiệp chung, `/tuan-lan/a8Kx2pQe` là thiệp riêng một khách. Các slug hệ thống như `api`, `dashboard`, `login`, `admin`, `_next` được giữ lại.
+Thiết kế để **mỗi lượt mở thiệp chỉ tốn 1–2 lượt đọc** (free: 50.000 đọc / 20.000 ghi mỗi ngày).
 
----
+| Document / Collection | Nội dung                                                                                                                          | Quyền                                                                                                                 |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `site/wedding`        | Toàn bộ nội dung thiệp: cô dâu/chú rể, bố mẹ, sự kiện, chuyện tình, album, nhạc, template đang dùng, tài khoản mừng cưới, cài đặt | Ai cũng đọc; chỉ admin ghi                                                                                            |
+| `site/admins`         | `{ emails: [...] }`                                                                                                               | Chỉ admin đọc; sửa tay trong Firebase Console                                                                         |
+| `guests/{code}`       | Tên gọi, bên (trai/gái), nhóm, số người tối đa, `openedAt`, `openCount`                                                           | Khách **get** đúng mã của mình (không liệt kê được); khách chỉ được tăng `openCount`/đặt `openedAt`; admin toàn quyền |
+| `rsvps/{id}`          | Mã khách (nếu có), tên, có đến không, số người, ghi chú, thời gian                                                                | Ai cũng tạo/sửa đúng định dạng; chỉ admin đọc                                                                         |
+| `wishes/{id}`         | Tên, lời chúc, bên, thời gian, `hidden`                                                                                           | Ai cũng tạo đúng định dạng; đọc lời chúc không bị ẩn; admin ẩn/xoá                                                    |
 
-## 3. Luồng hoạt động _(giữ như plan cũ)_
+**Chống spam (không có server):**
 
-- **Cặp đôi:**
-  1. Đăng nhập Google, đi qua wizard tạo thiệp.
-  2. Nhập sự kiện từng bên, upload ảnh/nhạc, nhập tài khoản ngân hàng.
-  3. Thêm khách (tay hoặc import Excel).
-  4. Publish, rồi copy link/tin nhắn gửi Zalo.
-  5. Theo dõi ai đã mở, RSVP, lời chúc; export Excel.
-  6. Mời người còn lại đồng quản lý.
+- Rules giới hạn độ dài và kiểu dữ liệu.
+- Mỗi mã khách chỉ có một RSVP (id = mã khách).
+- Honeypot.
+- Có thể bật thêm **App Check + reCAPTCHA v3** (miễn phí) ở bước hoàn thiện.
+
+## 5. Chức năng
+
+**Trang thiệp (khách):**
+
+- Phong bì "Kính mời {tên khách}", mở thiệp có hiệu ứng, nhạc nền.
+- Đếm ngược, thông tin hai bên gia đình.
+- Sự kiện theo bên khách, chỉ đường Google Maps, lưu vào lịch (Apple/Google).
+- Chuyện tình, album có lightbox.
+- RSVP, sổ lưu bút cập nhật realtime, QR mừng cưới theo bên.
+- Tôn trọng `prefers-reduced-motion`.
+
+**Trang quản lý:**
+
+- **Đăng nhập Google:** chỉ email trong `site/admins`.
+- **Nội dung:** thông tin cô dâu/chú rể/bố mẹ, sự kiện, chuyện tình, ảnh bìa, album, nhạc (upload Cloudinary).
+- **Template:** đổi bất cứ lúc nào, xem trước trong khung điện thoại.
 - **Khách mời:**
-  1. Mở link riêng, thấy phong bì "Kính mời anh Nam", bấm mở thì nhạc phát.
-  2. Chỉ thấy sự kiện của bên mình. Có đếm ngược, album, chỉ đường, lưu lịch (.ics / Google Calendar).
-  3. Gửi RSVP, lời chúc, quét QR mừng cưới.
+  - Thêm/sửa/xoá, import Excel.
+  - Mã link tự sinh, QR của link.
+  - Nút chép tin nhắn mời mẫu để gửi Zalo.
+  - Lọc theo bên/nhóm/đã mở/đã RSVP.
+- **RSVP:** thống kê số khách đến theo bên, xuất Excel.
+- **Sổ lưu bút:** ẩn/xoá lời chúc.
+- **Mừng cưới:** tài khoản ngân hàng nhà trai / nhà gái.
 
-## 4. Database (Drizzle, Postgres)
+## 6. Lộ trình
 
-- **Bảng của Better Auth:** `user` (+ `role`), `session`, `account`, `verification`.
-- **Bảng nghiệp vụ:** `weddings`, `wedding_members`, `wedding_invites`, `events`, `guests`, `rsvps`, `wishes`, `bank_accounts`, `photos`, `rate_limits`. Cột giống plan cũ; dùng `timestamptz`, `jsonb` cho theme/settings và enum Postgres cho side/status.
-- **Phân quyền:** mọi API dashboard đều gọi `requireWeddingAccess(weddingId)`.
-- **Giới hạn mỗi thiệp:** 40 ảnh, 1 nhạc ≤ 8 MB, 1.000 khách.
+Mỗi phase test xong và chạy ổn mới sang phase tiếp theo.
 
-## 5. Cấu trúc thư mục
+| Phase                         | Nội dung                                                                                                                                                                                                                     | Tiêu chí xong                                                                                |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **A. Nền móng + deploy**      | Bỏ Postgres/Drizzle/Better Auth/API. Next.js static export, Firebase SDK, `firebase.json`, `firestore.rules`, emulator, script seed. Thiệp `/` và `/m/<mã>` đọc Firestore. Hướng dẫn tạo project Firebase và deploy lần đầu. | `npm run check` pass; test rules trên emulator; thiệp mẫu chạy trên `*.web.app`              |
+| **B. Trang quản lý nội dung** | Đăng nhập Google + danh sách admin; sửa thông tin/sự kiện/chuyện tình; upload Cloudinary; đổi template + xem trước                                                                                                           | Sửa trong admin thì thiệp đổi ngay; email ngoài danh sách bị từ chối (test rules)            |
+| **C. Nâng cấp animation**     | Motion + Lenis cho 3 template: mở thiệp kiểu điện ảnh, chữ hiện dần, parallax, cánh hoa/hiệu ứng riêng mỗi mẫu                                                                                                               | Mượt trên điện thoại tầm trung; Lighthouse mobile ≥ 85; giảm hiệu ứng khi bật reduced-motion |
+| **D. Khách mời**              | Quản lý khách, import Excel, link `/m/<mã>`, QR, tin nhắn mẫu, theo dõi đã mở                                                                                                                                                | Import 50 khách; mở link thì admin thấy "đã mở"; mã sai báo không tìm thấy                   |
+| **E. RSVP + sổ lưu bút**      | Form RSVP, lời chúc realtime, thống kê, ẩn lời chúc, xuất Excel                                                                                                                                                              | Gửi RSVP 2 lần chỉ ra 1 bản ghi; lời chúc hiện ngay ở máy khác; dữ liệu sai bị rules chặn    |
+| **F. Mừng cưới + hoàn thiện** | QR VietQR theo bên, App Check (tuỳ chọn), tối ưu, ảnh preview chung khi share                                                                                                                                                | Quét QR bằng app ngân hàng thật; Lighthouse ổn                                               |
 
-```
-src/
-  app/
-    page.tsx                         # landing Thiệp Hồng
-    [slug]/page.tsx                  # thiệp chung
-    [slug]/[guestCode]/page.tsx      # thiệp theo khách
-    [slug]/[guestCode]/opengraph-image.tsx
-    dashboard/…  admin/…  login/
-    api/health/route.ts
-    api/auth/[...all]/route.ts       # Better Auth
-    api/weddings/…  api/guests/…  api/rsvp/…  api/wishes/…  api/track/…  api/uploads/sign/…
-  server/                            # BE (server-only)
-    db/schema.ts  db/index.ts
-    services/  auth.ts  permissions.ts
-  templates/sections/  templates/song-hy/  templates/thanh-lich/  templates/hoa-co/
-  components/ui/                     # shadcn
-  lib/                               # ics, vietqr, format ngày, validators (zod), side filter
-drizzle/                             # migrations
-tests/  e2e/
-docker-compose.yml                   # Postgres 17 local (db dev + db test)
-.env.example
-```
+## 7. Hạn mức miễn phí cần để ý
 
-## 6. Template (Phase 1)
+| Dịch vụ          | Free                                 | Ước tính cho một đám cưới                                                             |
+| ---------------- | ------------------------------------ | ------------------------------------------------------------------------------------- |
+| Firestore        | 1 GiB, 50k đọc + 20k ghi / ngày      | Mỗi lượt mở ≈ 2–3 đọc (+ lời chúc) → hàng nghìn lượt/ngày vẫn đủ                      |
+| Firebase Hosting | 10 GB lưu trữ, **360 MB tải / ngày** | JS + font ≈ 300–500 KB/lượt → ~700+ lượt/ngày; ảnh nằm trên Cloudinary nên không tính |
+| Firebase Auth    | Google sign-in miễn phí              | Chỉ 1–3 người quản trị                                                                |
+| Cloudinary       | 25 credits/tháng                     | ~40 ảnh + 1 bài nhạc, ảnh được resize theo màn hình                                   |
 
-1. **Song Hỷ**:
-   - Nền son mài đỏ thẫm, chữ vàng kim nhạt, phần chi tiết trình bày trên giấy dó.
-   - Font Prata + Alegreya.
-   - **Điểm nhấn:** phong bì là hai cánh cổng có con dấu 囍 chia đôi, bấm mở thì hai cánh tách ra.
-2. **Thanh Lịch**:
-   - Tối giản lạnh: navy mực, trắng giấy, xám xanh.
-   - Font Be Vietnam Pro (font do người Việt thiết kế) + Fraunces italic.
-   - **Điểm nhấn:** tờ lịch tháng cưới cỡ lớn, ngày cưới được khoanh tay.
-3. **Hoa Cỏ**:
-   - Nền trắng ánh xanh lá, xanh lá xám, hồng phấn, tím bằng lăng.
-   - Font Dancing Script + Quicksand.
-   - **Điểm nhấn:** cành hoa dại SVG tự "mọc" (vẽ nét) khi cuộn trang.
+## 8. Ghi chú triển khai
 
-Ba template dùng chung các section: Phong bì, Lời mời (bố mẹ 2 bên), Đếm ngược, Sự kiện, Chuyện tình, Album (lightbox), Lời cảm ơn, Nút nhạc. Mọi font đều có bộ ký tự tiếng Việt và tự host qua `next/font`. Đổi template bằng `?t=`. Tôn trọng `prefers-reduced-motion`. Ảnh mẫu dùng ảnh free (cần chọn nguồn không yêu cầu API key); nhạc mẫu chọn bản public domain (hỏi bạn trước khi tải file về repo).
-
----
-
-## 7. Lộ trình
-
-| Phase                        | Nội dung                                                                                                                                                                                                                                                                                                       | Test / tiêu chí xong                                                                                             |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **0. Khởi tạo lại**          | Dọn code Vite/Hono/Cloudflare (giữ `docs/`, `.gitattributes`, `.claude/`); `create-next-app` (TS, Tailwind, ESLint, `src/`); ghim TS 6; shadcn; Prettier; `docker-compose.yml` Postgres; Drizzle + `pg`; `GET /api/health` (query `select 1`); Vitest; cập nhật `docs/PLAN.md` + README; launch config; commit | `npm run check` pass; trang chủ hiện "API ✅ / DB ✅"; tắt Docker thì health trả 503; `npm run build` thành công |
-| **0b. Deploy** _(để sau)_    | GitHub, Vercel, Neon (tích hợp Vercel–Neon tự tạo DB branch cho mỗi preview), GitHub Actions chạy check                                                                                                                                                                                                        | `*.vercel.app/api/health` OK                                                                                     |
-| **1. Template (mock data)**  | 3 template + bộ section, mobile-first, phong bì, nhạc, đếm ngược, sự kiện theo bên, album lightbox, .ics                                                                                                                                                                                                       | Xem bằng viewport mobile; Lighthouse mobile ≥ 85; unit test helper (ics, lọc sự kiện theo bên, format ngày)      |
-| **2. Thiệp đọc từ DB**       | Schema + migration + seed; `/[slug]` đọc DB, 404 nếu chưa publish; cache + revalidate; metadata OG                                                                                                                                                                                                             | Seed 2 cặp, 2 link hiển thị đúng; test service                                                                   |
-| **3. Đăng nhập + Dashboard** | Better Auth Google; wizard; sửa thông tin/sự kiện; upload Cloudinary; publish; mời đồng quản lý                                                                                                                                                                                                                | E2E Playwright; user A không sửa được thiệp user B                                                               |
-| **4. Khách + link riêng**    | CRUD, import Excel, mã khách, lọc theo bên, OG có tên khách, tracking đã mở, tin nhắn mẫu                                                                                                                                                                                                                      | Import 50 khách; preview đúng tên                                                                                |
-| **5. RSVP + Sổ lưu bút**     | API RSVP (upsert), lời chúc, Turnstile + honeypot + rate limit, thống kê, ẩn lời chúc, export Excel                                                                                                                                                                                                            | Gửi RSVP 2 lần chỉ ra 1 bản ghi; spam bị chặn                                                                    |
-| **6. QR mừng cưới**          | Tài khoản 2 bên, VietQR theo bên, copy STK                                                                                                                                                                                                                                                                     | Quét bằng app ngân hàng thật                                                                                     |
-| **7. Tuỳ biến + Landing**    | Đổi màu/font, bật/tắt section, chọn template, landing page                                                                                                                                                                                                                                                     | Đổi trong dashboard thì thiệp đổi ngay                                                                           |
-| **8. Admin + hoàn thiện**    | Super admin, quota, theo dõi lỗi, backup `pg_dump` hàng tuần bằng GitHub Action                                                                                                                                                                                                                                | Backup chạy thành công                                                                                           |
-
----
-
-## 8. Chi tiết Phase 0 (làm ngay sau khi duyệt)
-
-1. **Dọn code cũ:**
-   - `git rm -r` các phần Vite/Hono/Cloudflare: `apps/`, `packages/`, `functions/`, `wrangler.toml`, các tsconfig, `eslint.config.js`, `package.json`.
-   - Phải dừng dev server nếu đang chạy, và hỏi bạn trước khi dừng.
-2. **Scaffold:**
-   - Chạy `npx create-next-app@latest` vào thư mục tạm, rồi chép sang project (giữ `docs/`, `.claude/`, `.gitattributes`, `.prettierrc.json`).
-   - Hạ TypeScript về `~6.0`.
-   - Cho phép script cài đặt cần thiết qua `allowScripts`.
-   - Kiểm tra ngay `npm run dev` / `npm run build`: SWC là file native, cần xác nhận Windows không chặn.
-3. **shadcn:** `npx shadcn@latest init -p nova`.
-4. **Database:**
-   - `docker-compose.yml`: Postgres 17, tạo 2 database `thiephong` + `thiephong_test`.
-   - `.env.example`: `DATABASE_URL`, `DATABASE_URL_TEST`.
-   - `src/server/db/index.ts`: `drizzle(new Pool(...))`, giữ một instance duy nhất khi hot reload.
-   - `drizzle.config.ts`; script `db:up`, `db:generate`, `db:migrate`.
-5. **API:** `src/app/api/health/route.ts` gọi `checkDatabase()` trong `src/server/services/health.ts`, trả kiểu `HealthResponse` (để ở `src/lib/types`).
-6. **Trang chủ tạm:** hiển thị trạng thái hệ thống (port từ `App.tsx` cũ).
-7. **Test:** Vitest gọi trực tiếp handler `GET` của route health với Postgres test, gồm case OK và case DB lỗi.
-8. **Script:**
-   - `dev`, `build`, `start`, `lint`, `typecheck`, `format(:check)`, `test`, `check`.
-   - Cập nhật `.claude/launch.json` (`next dev`, cổng 3000).
-9. **Tài liệu:** cập nhật `docs/PLAN.md` (thay bằng plan này) và README.
-10. **Commit:** chỉ commit khi bạn đồng ý.
-
-## 9. Kiểm thử chung
-
-- `npm run check` = typecheck + lint + format + Vitest.
-- Postgres local qua Docker: `npm run db:up`.
-- Kiểm tra trên trình duyệt bằng preview của app (viewport mobile); Lighthouse cho trang thiệp.
-- Từ Phase 3: Playwright e2e cho luồng chính.
-
-## 10. Chi phí
-
-**0đ**: Vercel Hobby, Neon free, Cloudinary free. Tốn tiền chỉ khi bạn tự chọn mua domain (~250k/năm).
-
----
-
-## Ghi chú triển khai
-
-- **Phase 0 (13/11/2026):**
-  - Next.js 16.4 bật sẵn Cache Components.
-  - Route handler đọc DB gọi `await connection()` để không bị prerender lúc build.
-  - Postgres local chạy ở cổng **5434** (tránh trùng Postgres khác trên máy).
-  - Test dùng `.env.test` (database `thiephong_test`), vì Next.js không đọc `.env.local` khi `NODE_ENV=test`.
-- **Phase 1 (13/11/2026):**
-  - 3 template (Song Hỷ, Thanh Lịch, Hoa Cỏ) chạy với dữ liệu mẫu `src/mocks/invitations.ts`.
-  - Xem thử: `/demo`, `/demo/nam2027` (khách nhà trai), `/demo/cohoa27` (khách nhà gái); thêm `?t=thanh-lich` hoặc `?t=hoa-co` để đổi template.
-  - Ảnh mẫu CC0 nằm trong `public/demo/` (nguồn ở `public/demo/CREDITS.md`); nhạc mẫu public domain phát từ Wikimedia.
-  - Lighthouse mobile (build production, máy local): Performance 85–88, Accessibility 100, Best Practices 100. SEO 83 vì thiệp cố ý đặt `noindex`.
-  - Cache Components: `params` được đọc trong `<Suspense>`, nên link sai hiện trang "Không tìm thấy thiệp" (kèm noindex) với HTTP 200 thay vì 404.
-- **Phase 2 (13/11/2026):**
-  - Schema Postgres (`src/server/db/schema.ts`): `weddings`, `events`, `story_items`, `photos`, `guests`. Migration đầu tiên: `drizzle/0000_init.sql`.
-  - `npm run db:seed` ghi 3 thiệp mẫu: `demo` và `anh-thu` đã publish, `ban-nhap` là bản nháp (phải báo không tìm thấy).
-  - Đọc dữ liệu: `src/server/repositories/invitations.ts` (truy vấn DB) → `src/server/services/invitations.ts` (`'use cache'` + tag `wedding:<slug>`).
-  - Sửa dữ liệu ngoài app thì gọi `POST /api/revalidate` (header `Authorization: Bearer $REVALIDATE_SECRET`). `db:seed` tự gọi nếu app đang chạy. Dashboard ở Phase 3 sẽ gọi `refreshWedding(slug)` sau mỗi lần lưu.
-  - Test chạy trên `thiephong_test`: global setup reset schema, áp migration rồi seed lại; chỉ chạy khi tên database kết thúc bằng `_test`.
-  - Lưu ý: `?t=` (xem thử template) đọc `searchParams` nên trang thiệp render theo từng request; dữ liệu vẫn lấy từ cache. Trên Vercel, cache `'use cache'` mặc định nằm trong bộ nhớ của từng instance.
-- **Phase 3 (13/11/2026):**
-  - Đăng nhập: Better Auth (`src/server/auth.ts`, route `/api/auth/[...all]`), session lưu trong Postgres. Google bật khi có `GOOGLE_CLIENT_ID/SECRET`. Khi phát triển dùng **tài khoản thử** email + mật khẩu: chỉ bật khi `DEV_LOGIN=true` và database ở localhost.
-  - Bảng mới (`drizzle/0001_auth_members.sql`): `user`, `session`, `account`, `verification`, `wedding_members` (owner/editor), `wedding_invites` (link mời dùng một lần, hạn 7 ngày). `weddings.cover` cho phép null (dùng ảnh bìa mặc định), `photos.public_id`.
-  - Phân quyền: mọi service dashboard gọi `requireWeddingAccess(userId, weddingId, role)` (`src/server/permissions.ts`). Người ngoài nhận **404** (không lộ thiệp có tồn tại); editor làm việc của owner nhận 403.
-  - API (`src/app/api`): `weddings` (GET/POST), `weddings/[id]` (GET/PATCH/DELETE), `…/events`, `…/story`, `…/photos` (PUT thay cả danh sách), `…/publish`, `…/members`, `…/invites`, `invites/[token]/accept`, `uploads/sign`, `slugs/check`. Body kiểm tra bằng zod (`src/lib/validators/wedding.ts`, dùng chung với form); bắt buộc `Content-Type: application/json` (chống CSRF cùng cookie SameSite=Lax).
-  - Upload: trình duyệt xin chữ ký ở `/api/uploads/sign` rồi tải thẳng lên Cloudinary vào thư mục `thiephong/<weddingId>`; định dạng và kích thước tối đa nằm trong chữ ký. Ảnh Cloudinary hiển thị qua `WeddingImage` (loader của Cloudinary, không tốn quota tối ưu ảnh của Vercel).
-  - Giới hạn: 3 thiệp/tài khoản, 4 người quản lý/thiệp, 12 sự kiện, 10 mục chuyện tình, 40 ảnh, nhạc ≤ 8 MB, ảnh ≤ 10 MB (`src/lib/invitation/defaults.ts`).
-  - Dashboard dùng Server Component đọc dữ liệu + form client gọi API (không dùng TanStack Query như plan ban đầu vì chưa cần). Trang xem trước `/dashboard/[id]/preview` đọc thẳng DB (không cache) để thấy bản vừa lưu.
-  - Test: Vitest cho service/API (user B không đụng được thiệp user A, publish cần sự kiện, đổi slug xoá cache cả hai slug, link mời dùng một lần, chữ ký Cloudinary theo ví dụ tài liệu). Playwright (`npm run test:e2e`) chạy trên bản build production cổng 3100, trình duyệt Edge có sẵn của Windows, database test.
-  - Chưa làm: xoá ảnh trên Cloudinary khi xoá thiệp/ảnh (Phase 8), ảnh cho từng mục chuyện tình, kéo-thả sắp xếp ảnh.
+- **Phase A (19/11/2026):**
+  - Đã bỏ Postgres/Drizzle/Better Auth/API route/dashboard cũ (còn trong git tại `105f9f0`). Giữ 3 template, các phần chung của thiệp, helper.
+  - Next.js `output: 'export'` → `out/`. `InvitationApp` đọc `site/wedding` (+ `guests/{code}`) bằng **Firestore Lite** ở trình duyệt rồi render template; `?t=` đổi template.
+  - Link khách `/m/<mã>`: Firebase Hosting rewrite `/m/**` → `/m.html`; khi chạy `next dev` thì rewrite nằm trong `next.config.ts`. Mã sai hiện "Không tìm thấy thiệp"; đường dẫn lạ trả 404 thật (`out/404.html`).
+  - Mở thiệp: tăng `openCount`, ghi `firstOpenedAt`/`lastOpenedAt` (giờ server); rules chỉ cho đúng thao tác này. Mỗi phiên trình duyệt ghi một lần. `?preview` không tính.
+  - Ảnh: loader chung `src/lib/image-loader.ts` (Cloudinary resize theo URL, ảnh trong `public/` giữ nguyên) vì site tĩnh không có server tối ưu ảnh.
+  - Emulator: Firestore **8085**, Hosting **5005**, Auth 9099, UI 4000 (8080 bị Docker chiếm trên máy dev). Project emulator: `demo-thiephong`.
+  - Test: 22 test logic + 9 test Security Rules trên emulator (`npm run test:rules`): khách không liệt kê/sửa được khách khác, không gian lận số lần mở, email chưa xác minh không phải admin, collection lạ bị chặn.

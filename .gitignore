@@ -47,3 +47,12 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Firebase
+.firebase/
+firebase-debug*.log
+firestore-debug*.log
+ui-debug*.log
+.emulator-data/
+*firebase-adminsdk*.json
+service-account*.json

@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// Quyền truy cập Firestore của Thiệp Hồng (không có server: mọi quyền nằm ở đây).
+// Test: npm run test:rules (chạy trên Firestore Emulator).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Admin = đăng nhập Google, email đã xác minh và nằm trong site/admins.emails
+    // (danh sách này sửa tay trong Firebase Console hoặc bằng npm run seed).
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email
+          in get(/databases/$(database)/documents/site/admins).data.emails;
+    }
+
+    // Nội dung thiệp: ai cũng đọc, chỉ admin sửa
+    match /site/wedding {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Danh sách admin: chỉ admin xem, không ai sửa qua app
+    match /site/admins {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Khách mời: khách chỉ đọc được đúng mã của mình (không liệt kê được danh sách)
+    match /guests/{code} {
+      allow get: if true;
+      allow list, create, delete: if isAdmin();
+      allow update: if isAdmin() || isOpenPing();
+    }
+
+    // Khách mở thiệp: chỉ được tăng openCount thêm 1 và ghi thời điểm mở (giờ server)
+    function isOpenPing() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      let before = resource.data;
+      let after = request.resource.data;
+      return changed.hasOnly(['openCount', 'firstOpenedAt', 'lastOpenedAt'])
+        && after.openCount == before.get('openCount', 0) + 1
+        && after.lastOpenedAt == request.time
+        && (
+          ('firstOpenedAt' in before && after.firstOpenedAt == before.firstOpenedAt)
+          || (!('firstOpenedAt' in before) && after.firstOpenedAt == request.time)
+        );
+    }
+  }
+}
