@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Biểu tượng Thiệp Hồng: hai trái tim lồng nhau trên nền son -->
+  <rect width="64" height="64" rx="14" fill="#a8234a"/>
+  <g transform="translate(0 -3)">
+  <path d="M25 47 12.6 34.9a7.6 7.6 0 0 1 12.4-8.6 7.6 7.6 0 0 1 12.4 8.6Z" fill="none" stroke="#fff7f8" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M39 47 26.6 34.9a7.6 7.6 0 0 1 12.4-8.6 7.6 7.6 0 0 1 12.4 8.6Z" fill="none" stroke="#e8c98d" stroke-width="3.2" stroke-linejoin="round"/>
+  </g>
+</svg>
