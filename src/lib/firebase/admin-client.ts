@@ -14,27 +14,26 @@ import {
 } from 'firebase/auth'
 import {
   collection,
-  connectFirestoreEmulator,
   deleteDoc,
   deleteField,
   doc,
   getDoc,
-  getFirestore,
   onSnapshot,
+  orderBy,
+  query,
   setDoc,
   updateDoc,
   writeBatch,
-  type Firestore,
   type Timestamp,
 } from 'firebase/firestore'
-import type { GuestDoc, WeddingDoc } from '@/lib/invitation/types'
+import type { GuestDoc, RsvpInput, WeddingDoc, WishInput } from '@/lib/invitation/types'
 import { toFirestore } from '@/lib/validators/wedding'
-import { FIRESTORE_EMULATOR_PORT, getFirebaseApp, USE_EMULATOR } from './config'
+import { getFirebaseApp, USE_EMULATOR } from './config'
+import { getFullDb } from './full-db'
 
 const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099'
 
 let auth: Auth | undefined
-let db: Firestore | undefined
 
 export function getAdminAuth() {
   if (!auth) {
@@ -45,13 +44,7 @@ export function getAdminAuth() {
   return auth
 }
 
-function getAdminDb() {
-  if (!db) {
-    db = getFirestore(getFirebaseApp())
-    if (USE_EMULATOR) connectFirestoreEmulator(db, '127.0.0.1', FIRESTORE_EMULATOR_PORT)
-  }
-  return db
-}
+const getAdminDb = getFullDb
 
 export const onAdminAuthChange = (callback: (user: User | null) => void) =>
   onAuthStateChanged(getAdminAuth(), callback)
@@ -206,3 +199,73 @@ export async function importGuests(guests: (GuestFields & { code: string })[]) {
     await batch.commit()
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* RSVP + lời chúc (trang quản lý)                                     */
+/* ------------------------------------------------------------------ */
+
+export interface AdminRsvp extends RsvpInput {
+  id: string
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export interface AdminWish extends WishInput {
+  id: string
+  hidden: boolean
+  createdAt?: Date
+}
+
+const toDate = (value: unknown) => (value as Timestamp | undefined)?.toDate?.()
+
+export function subscribeRsvps(
+  onChange: (rsvps: AdminRsvp[]) => void,
+  onError: (e: unknown) => void,
+) {
+  return onSnapshot(
+    query(collection(getAdminDb(), 'rsvps'), orderBy('updatedAt', 'desc')),
+    (snap) =>
+      onChange(
+        snap.docs.map((d) => {
+          const data = d.data()
+          return {
+            ...(data as RsvpInput),
+            id: d.id,
+            createdAt: toDate(data.createdAt),
+            updatedAt: toDate(data.updatedAt),
+          }
+        }),
+      ),
+    onError,
+  )
+}
+
+/** Mọi lời chúc kể cả đã ẩn (chỉ admin đọc được) */
+export function subscribeAllWishes(
+  onChange: (wishes: AdminWish[]) => void,
+  onError: (e: unknown) => void,
+) {
+  return onSnapshot(
+    query(collection(getAdminDb(), 'wishes'), orderBy('createdAt', 'desc')),
+    (snap) =>
+      onChange(
+        snap.docs.map((d) => {
+          const data = d.data()
+          return {
+            ...(data as WishInput),
+            id: d.id,
+            hidden: data.hidden === true,
+            createdAt: toDate(data.createdAt),
+          }
+        }),
+      ),
+    onError,
+  )
+}
+
+export const setWishHidden = (id: string, hidden: boolean) =>
+  updateDoc(doc(getAdminDb(), 'wishes', id), { hidden })
+
+export const deleteWish = (id: string) => deleteDoc(doc(getAdminDb(), 'wishes', id))
+
+export const deleteRsvp = (id: string) => deleteDoc(doc(getAdminDb(), 'rsvps', id))

@@ -28,7 +28,10 @@ service cloud.firestore {
         && d.events is list && d.events.size() <= 12
         && d.get('story', []) is list && d.get('story', []).size() <= 10
         && d.get('gallery', []) is list && d.get('gallery', []).size() <= 40
-        && d.get('inviteMessage', '') is string && d.get('inviteMessage', '').size() <= 1000;
+        && d.get('inviteMessage', '') is string && d.get('inviteMessage', '').size() <= 1000
+        && d.get('rsvpEnabled', true) is bool
+        && d.get('wishesEnabled', true) is bool
+        && d.get('rsvpDeadline', '') is string && d.get('rsvpDeadline', '').size() <= 10;
     }
 
     // Danh sách admin: chỉ admin xem, không ai sửa qua app
@@ -56,6 +59,71 @@ service cloud.firestore {
         && (!('maxAttendees' in d)
           || (d.maxAttendees is int && d.maxAttendees >= 1 && d.maxAttendees <= 20))
         && d.get('openCount', 0) is int;
+    }
+
+    function wedding() {
+      return get(/databases/$(database)/documents/site/wedding).data;
+    }
+
+    // RSVP: khách tự gửi/sửa, chỉ admin xem. Link riêng: id = mã khách (mỗi khách một bản ghi).
+    // Link chung: id ngẫu nhiên do trình duyệt tạo (lưu lại để sửa được).
+    match /rsvps/{id} {
+      allow read, delete: if isAdmin();
+      allow create: if wedding().get('rsvpEnabled', true) == true
+        && isValidRsvp(id, request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      allow update: if wedding().get('rsvpEnabled', true) == true
+        && isValidRsvp(id, request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function isValidRsvp(id, d) {
+      return id.matches('^[A-Za-z0-9_-]{3,40}$')
+        && d.keys().hasOnly(['guestCode', 'name', 'side', 'attending', 'count', 'note', 'createdAt', 'updatedAt'])
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 80
+        && d.side in ['groom', 'bride']
+        && d.attending is bool
+        && d.count is int
+        && (d.attending
+          ? (d.count >= 1 && d.count <= maxAttendeesFor(id, d))
+          : d.count == 0)
+        && d.get('note', '') is string && d.get('note', '').size() <= 300
+        && d.updatedAt == request.time
+        && (!('guestCode' in d) || isGuestRsvp(id, d));
+    }
+
+    // RSVP từ link riêng: đúng mã khách, đúng bên của khách
+    function isGuestRsvp(id, d) {
+      return d.guestCode == id
+        && exists(/databases/$(database)/documents/guests/$(id))
+        && d.side == get(/databases/$(database)/documents/guests/$(id)).data.side;
+    }
+
+    function maxAttendeesFor(id, d) {
+      return 'guestCode' in d
+        ? get(/databases/$(database)/documents/guests/$(id)).data.get('maxAttendees', 10)
+        : 10;
+    }
+
+    // Sổ lưu bút: ai cũng gửi được, ai cũng đọc lời chúc không bị ẩn, admin ẩn/xoá
+    match /wishes/{id} {
+      allow get, list: if resource.data.hidden == false || isAdmin();
+      allow create: if wedding().get('wishesEnabled', true) == true
+        && isValidWish(request.resource.data);
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hidden'])
+        && request.resource.data.hidden is bool;
+      allow delete: if isAdmin();
+    }
+
+    function isValidWish(d) {
+      return d.keys().hasOnly(['name', 'message', 'side', 'guestCode', 'createdAt', 'hidden'])
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 60
+        && d.message is string && d.message.size() >= 1 && d.message.size() <= 500
+        && (!('side' in d) || d.side in ['groom', 'bride'])
+        && (!('guestCode' in d) || (d.guestCode is string && d.guestCode.size() <= 32))
+        && d.createdAt == request.time
+        && d.hidden == false;
     }
 
     // Khách mở thiệp: chỉ được tăng openCount thêm 1 và ghi thời điểm mở (giờ server)

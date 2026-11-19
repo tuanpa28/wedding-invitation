@@ -1,6 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState, type ElementType, type ReactNode } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ElementType,
+  type ReactNode,
+} from 'react'
 import { Reveal as MotionReveal, type RevealVariant } from './motion'
 
 type RevealTag = 'div' | 'section' | 'li' | 'header' | 'footer' | 'figure' | 'p' | 'ol' | 'ul'
@@ -14,6 +21,7 @@ type RevealTag = 'div' | 'section' | 'li' | 'header' | 'footer' | 'figure' | 'p'
 export function Reveal({
   as = 'div',
   className,
+  style,
   children,
   plain = false,
   variant,
@@ -22,6 +30,7 @@ export function Reveal({
 }: {
   as?: RevealTag
   className?: string
+  style?: CSSProperties
   children: ReactNode
   plain?: boolean
   variant?: RevealVariant
@@ -30,13 +39,20 @@ export function Reveal({
 }) {
   if (!plain) {
     return (
-      <MotionReveal as={as} className={className} variant={variant} delay={delay} stagger={stagger}>
+      <MotionReveal
+        as={as}
+        className={className}
+        style={style}
+        variant={variant}
+        delay={delay}
+        stagger={stagger}
+      >
         {children}
       </MotionReveal>
     )
   }
   return (
-    <PlainReveal as={as} className={className}>
+    <PlainReveal as={as} className={className} style={style}>
       {children}
     </PlainReveal>
   )
@@ -45,10 +61,12 @@ export function Reveal({
 function PlainReveal({
   as: Tag,
   className,
+  style,
   children,
 }: {
   as: ElementType
   className?: string
+  style?: CSSProperties
   children: ReactNode
 }) {
   const ref = useRef<HTMLElement>(null)
@@ -71,7 +89,7 @@ function PlainReveal({
   }, [])
 
   return (
-    <Tag ref={ref} data-shown={shown ? '' : undefined} className={className}>
+    <Tag ref={ref} data-shown={shown ? '' : undefined} className={className} style={style}>
       {children}
     </Tag>
   )

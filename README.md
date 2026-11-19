@@ -63,6 +63,7 @@ Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Host
 - **Ảnh & nhạc:** ảnh bìa, album (tối đa 40 ảnh), nhạc nền (tải file ≤ 8 MB hoặc dán link https).
 - **Chuyện tình:** các cột mốc của hai bạn.
 - **Khách mời:** thêm từng khách hoặc nhập Excel (có file mẫu), mỗi khách một link `/m/<mã>`; chép link / chép tin nhắn mời / mã QR; theo dõi ai đã mở thiệp (cập nhật ngay); lọc theo bên, nhóm, trạng thái; xuất Excel. Tin nhắn mời mẫu sửa được.
+- **Phản hồi:** bật/tắt form xác nhận tham dự và sổ lưu bút, đặt hạn xác nhận; xem số người sẽ đến theo từng bên, ai chưa phản hồi, xuất Excel; ẩn/hiện/xoá lời chúc.
 
 Khung điện thoại bên phải hiện đúng thiệp khách thấy (đổi "Link chung / Khách nhà trai / Khách nhà gái") và tải lại sau mỗi lần lưu.
 

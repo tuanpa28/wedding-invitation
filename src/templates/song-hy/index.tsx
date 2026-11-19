@@ -4,6 +4,10 @@ import type { CSSProperties, ReactNode } from 'react'
 import { Album } from '@/components/invitation/album'
 import { Countdown } from '@/components/invitation/countdown'
 import { EventActions } from '@/components/invitation/event-actions'
+import { RsvpForm } from '@/components/invitation/feedback/rsvp-form'
+import { feedbackTheme } from '@/components/invitation/feedback/styles'
+import { WishesBoard } from '@/components/invitation/feedback/wishes-board'
+import { rsvpState } from '@/lib/feedback'
 import {
   CoverOverlay,
   InvitationShell,
@@ -57,6 +61,17 @@ const palette = {
   '--sh-paper-light': '#faf3e6',
   '--sh-ink': '#3b1a12',
 } as CSSProperties
+
+// Form RSVP / sổ lưu bút: viền vàng, nút son, góc vuông kiểu truyền thống
+const feedback = feedbackTheme({
+  accent: 'var(--sh-red)',
+  onAccent: 'var(--sh-gold-pale)',
+  ink: 'var(--sh-ink)',
+  muted: 'rgb(59 26 18 / 0.68)',
+  card: '#fffaf0',
+  line: 'rgb(211 176 100 / 0.75)',
+  radius: '0px',
+})
 
 const lacquerBg =
   'bg-[radial-gradient(120%_70%_at_50%_30%,#8a1c13_0%,var(--sh-lacquer)_55%,var(--sh-lacquer-deep)_100%)]'
@@ -314,6 +329,24 @@ export default function SongHyTemplate({
             />
           </div>
         </section>
+      )}
+
+      {/* ---------- Xác nhận tham dự + sổ lưu bút ---------- */}
+      {rsvpState(invitation) !== 'disabled' && (
+        <Paper light>
+          <Heading>Xác nhận tham dự</Heading>
+          <Reveal className="mt-8" style={feedback}>
+            <RsvpForm invitation={invitation} guest={guest} />
+          </Reveal>
+        </Paper>
+      )}
+      {invitation.wishesEnabled !== false && (
+        <Paper>
+          <Heading>Sổ lưu bút</Heading>
+          <div className="mt-8" style={feedback}>
+            <WishesBoard guest={guest} />
+          </div>
+        </Paper>
       )}
 
       {/* ---------- Lời cảm ơn ---------- */}

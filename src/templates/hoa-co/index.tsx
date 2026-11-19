@@ -5,6 +5,10 @@ import type { CSSProperties, ReactNode } from 'react'
 import { Album } from '@/components/invitation/album'
 import { Countdown } from '@/components/invitation/countdown'
 import { EventActions } from '@/components/invitation/event-actions'
+import { RsvpForm } from '@/components/invitation/feedback/rsvp-form'
+import { feedbackTheme } from '@/components/invitation/feedback/styles'
+import { WishesBoard } from '@/components/invitation/feedback/wishes-board'
+import { rsvpState } from '@/lib/feedback'
 import {
   CoverOverlay,
   InvitationShell,
@@ -59,6 +63,17 @@ const palette = {
   '--hc-butter': '#f0d89d',
   '--hc-ink': '#36412f',
 } as CSSProperties
+
+// Form RSVP / sổ lưu bút: bo tròn mềm, nút xanh lá
+const feedback = feedbackTheme({
+  accent: 'var(--hc-leaf)',
+  onAccent: 'var(--hc-card)',
+  ink: 'var(--hc-ink)',
+  muted: 'var(--hc-moss)',
+  card: 'var(--hc-card)',
+  line: 'rgb(145 165 132 / 0.55)',
+  radius: '1.25rem',
+})
 
 export default function HoaCoTemplate({
   invitation,
@@ -280,6 +295,24 @@ export default function HoaCoTemplate({
           </section>
         )}
       </main>
+
+      {/* ---------- Xác nhận tham dự + sổ lưu bút ---------- */}
+      <div className="mx-auto max-w-md space-y-8 px-5 pb-16" style={feedback}>
+        {rsvpState(invitation) !== 'disabled' && (
+          <Card>
+            <Heading>Xác nhận tham dự</Heading>
+            <div className="mt-6">
+              <RsvpForm invitation={invitation} guest={guest} />
+            </div>
+          </Card>
+        )}
+        {invitation.wishesEnabled !== false && (
+          <section>
+            <Heading className="mb-6 pt-4">Sổ lưu bút</Heading>
+            <WishesBoard guest={guest} />
+          </section>
+        )}
+      </div>
 
       {/* ---------- Lời cảm ơn ---------- */}
       <Reveal

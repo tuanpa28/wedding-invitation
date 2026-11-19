@@ -5,6 +5,10 @@ import type { CSSProperties, ReactNode } from 'react'
 import { Album } from '@/components/invitation/album'
 import { Countdown } from '@/components/invitation/countdown'
 import { EventActions } from '@/components/invitation/event-actions'
+import { RsvpForm } from '@/components/invitation/feedback/rsvp-form'
+import { feedbackTheme } from '@/components/invitation/feedback/styles'
+import { WishesBoard } from '@/components/invitation/feedback/wishes-board'
+import { rsvpState } from '@/lib/feedback'
 import {
   CoverOverlay,
   InvitationShell,
@@ -57,6 +61,17 @@ const palette = {
   '--tl-slate': '#5f6c78',
   '--tl-blue': '#2f5578',
 } as CSSProperties
+
+// Form RSVP / sổ lưu bút: tối giản, nút mực, góc vuông
+const feedback = feedbackTheme({
+  accent: 'var(--tl-ink)',
+  onAccent: 'var(--tl-paper)',
+  ink: 'var(--tl-ink)',
+  muted: 'var(--tl-slate)',
+  card: '#ffffff',
+  line: 'var(--tl-mist)',
+  radius: '0px',
+})
 
 const WEEKDAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
 
@@ -241,6 +256,22 @@ export default function ThanhLichTemplate({
       {invitation.gallery.length > 0 && (
         <Section label="Album">
           <Album photos={invitation.gallery} className="gap-1" />
+        </Section>
+      )}
+
+      {/* ---------- Xác nhận tham dự + sổ lưu bút ---------- */}
+      {rsvpState(invitation) !== 'disabled' && (
+        <Section label="Xác nhận">
+          <Reveal style={feedback}>
+            <RsvpForm invitation={invitation} guest={guest} />
+          </Reveal>
+        </Section>
+      )}
+      {invitation.wishesEnabled !== false && (
+        <Section label="Lời chúc">
+          <div style={feedback}>
+            <WishesBoard guest={guest} />
+          </div>
         </Section>
       )}
 

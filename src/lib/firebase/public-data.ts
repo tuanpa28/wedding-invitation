@@ -1,17 +1,27 @@
 // Dữ liệu cho trang thiệp của khách. Dùng Firestore Lite (nhẹ hơn nhiều, không realtime)
 // vì trang thiệp chỉ cần đọc một lần.
 import {
+  addDoc,
+  collection,
   connectFirestoreEmulator,
   doc,
   getDoc,
   getFirestore,
   increment,
   serverTimestamp,
+  setDoc,
   updateDoc,
   type Firestore,
 } from 'firebase/firestore/lite'
 import { DEFAULT_COVER } from '@/lib/invitation/defaults'
-import type { Guest, GuestDoc, Invitation, WeddingDoc } from '@/lib/invitation/types'
+import type {
+  Guest,
+  GuestDoc,
+  Invitation,
+  RsvpInput,
+  WeddingDoc,
+  WishInput,
+} from '@/lib/invitation/types'
 import { isValidGuestCode } from '@/lib/invitation/validation'
 import { FIRESTORE_EMULATOR_PORT, getFirebaseApp, USE_EMULATOR } from './config'
 
@@ -50,6 +60,7 @@ export async function fetchGuest(code: string): Promise<GuestWithOpenState | nul
     code,
     side: data.side,
     displayName: data.displayName,
+    maxAttendees: data.maxAttendees,
     firstOpened: data.firstOpenedAt === undefined,
   }
 }
@@ -75,4 +86,38 @@ export async function recordGuestOpen(guest: GuestWithOpenState) {
   } catch {
     // không ảnh hưởng tới việc xem thiệp
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* RSVP + lời chúc                                                     */
+/* ------------------------------------------------------------------ */
+
+const isPermissionDenied = (error: unknown) =>
+  (error as { code?: string } | null)?.code === 'permission-denied'
+
+/**
+ * Gửi hoặc sửa RSVP. Khách không đọc được bản ghi (rules) nên thử tạo mới trước;
+ * nếu đã có (gửi lần 2, hoặc từ máy khác) thì sửa — giữ nguyên createdAt.
+ */
+export async function submitRsvp(id: string, input: RsvpInput) {
+  const ref = doc(getDb(), 'rsvps', id)
+  const data = { ...withoutUndefined(input), updatedAt: serverTimestamp() }
+  try {
+    await setDoc(ref, { ...data, createdAt: serverTimestamp() })
+  } catch (error) {
+    if (!isPermissionDenied(error)) throw error
+    await updateDoc(ref, data)
+  }
+}
+
+export async function submitWish(input: WishInput) {
+  await addDoc(collection(getDb(), 'wishes'), {
+    ...withoutUndefined(input),
+    createdAt: serverTimestamp(),
+    hidden: false,
+  })
+}
+
+function withoutUndefined<T extends object>(value: T): T {
+  return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T
 }

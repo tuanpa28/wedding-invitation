@@ -57,6 +57,8 @@ export interface Guest {
   side: Side
   /** Cách gọi trên thiệp, ví dụ "Anh Nam", "Cô Hoa và gia đình" */
   displayName: string
+  /** Số người tối đa khi xác nhận dự tiệc */
+  maxAttendees?: number
 }
 
 export interface Invitation {
@@ -71,6 +73,12 @@ export interface Invitation {
   story: StoryItem[]
   gallery: Photo[]
   musicUrl?: string
+  /** Bật form xác nhận dự tiệc (mặc định bật) */
+  rsvpEnabled?: boolean
+  /** Hạn xác nhận dạng YYYY-MM-DD (giờ Việt Nam); quá hạn thì form đóng */
+  rsvpDeadline?: string
+  /** Bật sổ lưu bút (mặc định bật) */
+  wishesEnabled?: boolean
 }
 
 /** Document site/wedding trong Firestore: nội dung thiệp (một đám cưới duy nhất) */
@@ -88,4 +96,23 @@ export interface GuestDoc {
   group?: string
   maxAttendees?: number
   openCount?: number
+}
+
+/** RSVP (rsvps/{id}): link riêng id = mã khách, link chung id ngẫu nhiên */
+export interface RsvpInput {
+  guestCode?: string
+  name: string
+  side: Side
+  attending: boolean
+  /** Số người sẽ đến (0 nếu không đến) */
+  count: number
+  note?: string
+}
+
+/** Lời chúc (wishes/{id}) */
+export interface WishInput {
+  name: string
+  message: string
+  side?: Side
+  guestCode?: string
 }
