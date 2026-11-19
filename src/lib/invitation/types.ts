@@ -79,6 +79,16 @@ export interface Invitation {
   rsvpDeadline?: string
   /** Bật sổ lưu bút (mặc định bật) */
   wishesEnabled?: boolean
+  /** Tài khoản nhận mừng cưới của từng bên (QR VietQR) */
+  gifts?: Partial<Record<Side, GiftAccount>>
+}
+
+export interface GiftAccount {
+  /** Mã BIN ngân hàng (NAPAS), ví dụ 970436 = Vietcombank */
+  bankBin: string
+  accountNumber: string
+  /** In hoa không dấu, như trên thẻ */
+  accountName: string
 }
 
 /** Document site/wedding trong Firestore: nội dung thiệp (một đám cưới duy nhất) */

@@ -1,7 +1,7 @@
 'use client'
 
 import { Check, Minus, Plus } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, useSyncExternalStore, type FormEvent } from 'react'
 import {
   DEFAULT_MAX_ATTENDEES,
   formatDeadline,
@@ -24,10 +24,21 @@ type Status = 'idle' | 'sending' | 'done' | 'error'
  * Link riêng: tên + bên đã biết, mỗi khách một bản ghi (sửa được). Link chung: khách tự điền.
  */
 export function RsvpForm({ invitation, guest }: { invitation: Invitation; guest?: Guest }) {
-  const state = rsvpState(invitation)
-  const [id] = useState(() => (typeof window === 'undefined' ? '' : rsvpIdFor(guest?.code)))
-  const [saved, setSaved] = useState<RsvpInput | null>(() => (id ? loadSavedRsvp(id) : null))
-  const [editing, setEditing] = useState(saved === null)
+  // Thiệp được dựng sẵn lúc build: lần render đầu phải giống HTML có sẵn, nên giá trị
+  // riêng của máy khách (giờ hiện tại, câu trả lời đã lưu) chỉ đọc sau khi hydrate.
+  const minute = useSyncExternalStore(subscribeNothing, currentMinute, () => 0)
+  const hydrated = minute > 0
+  const state = rsvpState(invitation, minute * 60_000)
+  const code = guest?.code
+  const local = useMemo(() => {
+    if (!hydrated) return null
+    const id = rsvpIdFor(code)
+    return { id, saved: loadSavedRsvp(id) }
+  }, [hydrated, code])
+  const [justSaved, setJustSaved] = useState<RsvpInput | null>(null)
+  const [editing, setEditing] = useState(false)
+  const id = local?.id ?? ''
+  const saved = justSaved ?? local?.saved ?? null
 
   if (state === 'disabled') return null
   if (state === 'closed') {
@@ -69,12 +80,16 @@ export function RsvpForm({ invitation, guest }: { invitation: Invitation; guest?
       initial={saved}
       onSaved={(value) => {
         saveRsvpLocally(id, value)
-        setSaved(value)
+        setJustSaved(value)
         setEditing(false)
       }}
     />
   )
 }
+
+const subscribeNothing = () => () => {}
+/** Phút hiện tại (giá trị ổn định trong một phút, đủ cho hạn chót tính theo ngày) */
+const currentMinute = () => Math.floor(Date.now() / 60_000)
 
 function RsvpFields({
   id,

@@ -31,7 +31,9 @@ service cloud.firestore {
         && d.get('inviteMessage', '') is string && d.get('inviteMessage', '').size() <= 1000
         && d.get('rsvpEnabled', true) is bool
         && d.get('wishesEnabled', true) is bool
-        && d.get('rsvpDeadline', '') is string && d.get('rsvpDeadline', '').size() <= 10;
+        && d.get('rsvpDeadline', '') is string && d.get('rsvpDeadline', '').size() <= 10
+        && d.get('gifts', {}) is map
+        && d.get('gifts', {}).keys().hasOnly(['groom', 'bride']);
     }
 
     // Danh sách admin: chỉ admin xem, không ai sửa qua app

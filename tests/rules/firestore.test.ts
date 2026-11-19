@@ -76,6 +76,17 @@ describe('site/wedding', () => {
     await assertFails(deleteDoc(doc(admin(), 'site/wedding')))
   })
 
+  it('tài khoản mừng cưới chỉ có nhà trai / nhà gái', async () => {
+    const account = {
+      bankBin: '970436',
+      accountNumber: '0011004455667',
+      accountName: 'NGUYEN MINH TUAN',
+    }
+    await assertSucceeds(updateDoc(doc(admin(), 'site/wedding'), { gifts: { groom: account } }))
+    await assertFails(updateDoc(doc(admin(), 'site/wedding'), { gifts: { ban: account } }))
+    await assertFails(updateDoc(doc(admin(), 'site/wedding'), { gifts: 'chuỗi' }))
+  })
+
   it('project mới: admin tạo được nội dung thiệp lần đầu', async () => {
     await env.withSecurityRulesDisabled((ctx) => deleteDoc(doc(ctx.firestore(), 'site/wedding')))
     await assertFails(setDoc(doc(stranger(), 'site/wedding'), WEDDING))

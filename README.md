@@ -64,6 +64,7 @@ Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Host
 - **Chuyện tình:** các cột mốc của hai bạn.
 - **Khách mời:** thêm từng khách hoặc nhập Excel (có file mẫu), mỗi khách một link `/m/<mã>`; chép link / chép tin nhắn mời / mã QR; theo dõi ai đã mở thiệp (cập nhật ngay); lọc theo bên, nhóm, trạng thái; xuất Excel. Tin nhắn mời mẫu sửa được.
 - **Phản hồi:** bật/tắt form xác nhận tham dự và sổ lưu bút, đặt hạn xác nhận; xem số người sẽ đến theo từng bên, ai chưa phản hồi, xuất Excel; ẩn/hiện/xoá lời chúc.
+- **Mừng cưới:** tài khoản ngân hàng nhà trai / nhà gái → thiệp có mục mừng cưới với QR VietQR (app ngân hàng nào cũng quét được) và nút chép số tài khoản. Lưu xong nên quét thử QR trong khung xem trước bằng app ngân hàng thật.
 
 Khung điện thoại bên phải hiện đúng thiệp khách thấy (đổi "Link chung / Khách nhà trai / Khách nhà gái") và tải lại sau mỗi lần lưu.
 
@@ -145,13 +146,27 @@ Danh sách admin (và thiệp mẫu nếu project chưa có nội dung) được
 npm run seed -- --prod
 ```
 
-### 4. Deploy
+### 4. Deploy (thiệp được dựng sẵn lúc build)
 
 ```bash
 npm run deploy
 ```
 
-Thiệp ở `https://<project-id>.web.app` (và `https://<project-id>.firebaseapp.com`). Mỗi lần sửa code thì chạy lại `npm run deploy`. Nội dung thiệp sửa trong trang quản lý (`/admin`) thì không cần deploy lại.
+Thiệp ở `https://<project-id>.web.app` (và `https://<project-id>.firebaseapp.com`). Lúc build, nội dung thiệp được đọc từ Firestore và nhúng sẵn vào HTML (link chung hiện ngay, ảnh preview khi share có tên cô dâu chú rể + ảnh bìa).
+
+- Sửa nội dung trong `/admin`: khách thấy ngay, không bắt buộc deploy lại.
+- Sau khi **đổi mẫu thiệp hoặc ảnh bìa**: nên chạy lại `npm run deploy` để HTML dựng sẵn và ảnh preview khớp bản mới.
+- Sửa code: chạy lại `npm run deploy`.
+
+### 5. App Check — chống spam (tuỳ chọn)
+
+RSVP và lời chúc ai cũng gửi được (site không có server). Để chặn bot/script gửi hàng loạt:
+
+1. Firebase Console → **App Check** → **Apps** → chọn web app → **reCAPTCHA v3** → làm theo hướng dẫn tạo khoá (trang reCAPTCHA của Google), dán _secret key_ vào Firebase.
+2. Dán _site key_ vào `.env.local`: `NEXT_PUBLIC_RECAPTCHA_SITE_KEY=...` rồi `npm run deploy`.
+3. Đợi 1–2 ngày xem tab **Metrics** của App Check thấy request hợp lệ, rồi bấm **Enforce** cho Cloud Firestore.
+
+> Khi đã Enforce, mọi request Firestore phải có token App Check (trang quản lý và thiệp đều tự gắn). Lệnh `npm run seed -- --prod` dùng Admin SDK nên không bị ảnh hưởng.
 
 > Khi deploy xong, đặt lại `NEXT_PUBLIC_FIREBASE_EMULATOR=true` nếu muốn tiếp tục làm việc với emulator ở máy.
 

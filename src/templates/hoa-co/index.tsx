@@ -5,6 +5,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { Album } from '@/components/invitation/album'
 import { Countdown } from '@/components/invitation/countdown'
 import { EventActions } from '@/components/invitation/event-actions'
+import { GiftSection, hasGiftAccounts } from '@/components/invitation/feedback/gift-section'
 import { RsvpForm } from '@/components/invitation/feedback/rsvp-form'
 import { feedbackTheme } from '@/components/invitation/feedback/styles'
 import { WishesBoard } from '@/components/invitation/feedback/wishes-board'
@@ -313,6 +314,17 @@ export default function HoaCoTemplate({
           </section>
         )}
       </div>
+
+      {hasGiftAccounts(invitation) && (
+        <div className="mx-auto max-w-md px-5 pb-16" style={feedback}>
+          <Card>
+            <Heading>Mừng cưới</Heading>
+            <div className="mt-6">
+              <GiftSection invitation={invitation} guest={guest} />
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* ---------- Lời cảm ơn ---------- */}
       <Reveal

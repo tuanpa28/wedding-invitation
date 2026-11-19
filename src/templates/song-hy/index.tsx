@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { Album } from '@/components/invitation/album'
 import { Countdown } from '@/components/invitation/countdown'
 import { EventActions } from '@/components/invitation/event-actions'
+import { GiftSection, hasGiftAccounts } from '@/components/invitation/feedback/gift-section'
 import { RsvpForm } from '@/components/invitation/feedback/rsvp-form'
 import { feedbackTheme } from '@/components/invitation/feedback/styles'
 import { WishesBoard } from '@/components/invitation/feedback/wishes-board'
@@ -346,6 +347,15 @@ export default function SongHyTemplate({
           <div className="mt-8" style={feedback}>
             <WishesBoard guest={guest} />
           </div>
+        </Paper>
+      )}
+
+      {hasGiftAccounts(invitation) && (
+        <Paper light>
+          <Heading>Mừng cưới</Heading>
+          <Reveal className="mt-8" style={feedback}>
+            <GiftSection invitation={invitation} guest={guest} />
+          </Reveal>
         </Paper>
       )}
 

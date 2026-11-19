@@ -10,6 +10,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type ReactNode,
 } from 'react'
@@ -44,11 +45,9 @@ export function useInvitation() {
 
 /** ?motion=full: luôn chạy hiệu ứng kể cả khi máy bật "giảm chuyển động" (xem trước trong trang quản lý) */
 function readForceMotion() {
-  return (
-    typeof window !== 'undefined' &&
-    new URL(window.location.href).searchParams.get('motion') === 'full'
-  )
+  return new URL(window.location.href).searchParams.get('motion') === 'full'
 }
+const subscribeNothing = () => () => {}
 
 /**
  * Khung chung của mọi template: giữ trạng thái phong bì + nhạc nền.
@@ -73,7 +72,8 @@ export function InvitationShell({
 }) {
   const [phase, setPhase] = useState<InvitationPhase>('closed')
   const [playing, setPlaying] = useState(false)
-  const [forceMotion] = useState(readForceMotion)
+  // Đọc sau khi hydrate: thiệp được dựng sẵn HTML lúc build, lần render đầu phải giống HTML đó
+  const forceMotion = useSyncExternalStore(subscribeNothing, readForceMotion, () => false)
   const systemReduced = useReducedMotion() ?? false
   const reducedMotion = systemReduced && !forceMotion
   const audioRef = useRef<HTMLAudioElement>(null)

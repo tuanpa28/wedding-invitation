@@ -10,6 +10,7 @@ import { TEMPLATE_CATALOG } from '@/templates/catalog'
 import type { WeddingPatch } from './editor-types'
 import { EventsForm } from './events-form'
 import { FeedbackTab } from './feedback/feedback-tab'
+import { GiftsTab } from './gifts-tab'
 import { GuestsTab } from './guests/guests-tab'
 import { InfoForm } from './info-form'
 import { MediaForm } from './media-form'
@@ -25,6 +26,7 @@ const TABS = [
   { value: 'story', label: 'Chuyện tình' },
   { value: 'guests', label: 'Khách mời' },
   { value: 'feedback', label: 'Phản hồi' },
+  { value: 'gifts', label: 'Mừng cưới' },
 ] as const
 
 export function WeddingEditor({ initial }: { initial: WeddingDoc | null }) {
@@ -112,6 +114,9 @@ export function WeddingEditor({ initial }: { initial: WeddingDoc | null }) {
             </TabsContent>
             <TabsContent value="feedback">
               <FeedbackTab wedding={wedding} onSave={onSave} />
+            </TabsContent>
+            <TabsContent value="gifts">
+              <GiftsTab wedding={wedding} onSave={onSave} />
             </TabsContent>
           </div>
         </Tabs>

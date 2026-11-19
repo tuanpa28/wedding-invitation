@@ -1,4 +1,5 @@
 import { getApp, getApps, initializeApp, type FirebaseOptions } from 'firebase/app'
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
 
 /**
  * Chạy với Firebase Emulator (máy local, không cần project thật) khi
@@ -20,6 +21,18 @@ const firebaseOptions: FirebaseOptions = USE_EMULATOR
       appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     }
 
+/** Khoá reCAPTCHA v3 cho App Check (tuỳ chọn, chống spam — xem README → App Check) */
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+
 export function getFirebaseApp() {
-  return getApps().length ? getApp() : initializeApp(firebaseOptions)
+  if (getApps().length) return getApp()
+  const app = initializeApp(firebaseOptions)
+  // App Check chỉ chạy ở trình duyệt, với project thật và khi đã có khoá
+  if (RECAPTCHA_SITE_KEY && !USE_EMULATOR && typeof window !== 'undefined') {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+      isTokenAutoRefreshEnabled: true,
+    })
+  }
+  return app
 }
