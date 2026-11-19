@@ -77,26 +77,6 @@ export const demoInvitation: Invitation = {
       lunarText: 'Tức ngày mùng 2 tháng Chạp năm Bính Ngọ',
     },
   ],
-  story: [
-    {
-      date: 'Tháng 10, 2021',
-      title: 'Cơn mưa đầu mùa',
-      text: 'Chung một chiếc ô ở bến xe buýt Kim Mã, hai người lạ đi chung đoạn đường dài hơn dự định.',
-      photo: photo('story-1.jpg', 960, 640, 'Hai người đi chung một chiếc ô'),
-    },
-    {
-      date: 'Tháng 6, 2023',
-      title: 'Chuyến đi Quy Nhơn',
-      text: 'Hoàng hôn ở Kỳ Co, lần đầu tiên nói với nhau về một mái nhà chung.',
-      photo: photo('story-2.jpg', 960, 1440, 'Hai người trên bãi biển lúc hoàng hôn'),
-    },
-    {
-      date: 'Tháng 2, 2026',
-      title: 'Lời cầu hôn',
-      text: 'Một chiếc nhẫn giấu trong hộp mứt ngày Tết, và câu trả lời là “Có”.',
-      photo: photo('story-3.jpg', 960, 640, 'Cô dâu cầm đôi nhẫn cưới'),
-    },
-  ],
   gallery: [
     photo('g-01.jpg', 960, 640, 'Cô dâu chú rể nắm tay đi dạo'),
     photo('g-03.jpg', 960, 1440, 'Hồ nước giữa núi, nơi hai người từng đi trốn cuối tuần'),

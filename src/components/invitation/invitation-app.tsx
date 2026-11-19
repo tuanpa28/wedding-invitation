@@ -63,6 +63,11 @@ export function InvitationApp({
   useEffect(() => {
     let active = true
     const url = new URL(window.location.href)
+    // "/m" không kèm mã khách → về link chung (Firebase Hosting cũng chuyển hướng /m → /)
+    if (mode === 'guest' && /^\/m\/?$/.test(url.pathname) && !url.searchParams.get('k')) {
+      window.location.replace(`/${url.search}`)
+      return
+    }
     // Link khách: tải sẵn code template trong lúc đợi đọc tên khách
     if (snapshot) void TEMPLATE_LOADERS[snapshot.templateId]?.().catch(() => {})
     // ?t=hoa-co để xem thử template khác

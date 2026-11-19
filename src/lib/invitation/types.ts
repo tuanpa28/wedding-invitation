@@ -45,13 +45,6 @@ export interface WeddingEvent {
   lunarText?: string
 }
 
-export interface StoryItem {
-  date: string
-  title: string
-  text: string
-  photo?: Photo
-}
-
 export interface Guest {
   code: string
   side: Side
@@ -70,7 +63,6 @@ export interface Invitation {
   quote?: string
   cover: Photo
   events: WeddingEvent[]
-  story: StoryItem[]
   gallery: Photo[]
   musicUrl?: string
   /** Bật form xác nhận dự tiệc (mặc định bật) */

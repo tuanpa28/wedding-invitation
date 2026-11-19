@@ -216,3 +216,15 @@ export function buildIcs(event: WeddingEvent, invitation: CalendarCouple, nowMs:
   ]
   return lines.join('\r\n') + '\r\n'
 }
+
+/**
+ * Sự kiện chính cho link chung (không có tên khách): sự kiện chung hai bên sớm nhất,
+ * không có thì tiệc cưới sớm nhất, không có nữa thì sự kiện sớm nhất.
+ * Link chung chỉ mời chung chung; lịch từng bên (vu quy, thành hôn tại nhà) chỉ có trong link riêng.
+ */
+export function mainEvent(events: WeddingEvent[]): WeddingEvent | undefined {
+  const sorted = [...events].sort(byStart)
+  return (
+    sorted.find((e) => e.side === 'both') ?? sorted.find((e) => e.type === 'tiec_cuoi') ?? sorted[0]
+  )
+}

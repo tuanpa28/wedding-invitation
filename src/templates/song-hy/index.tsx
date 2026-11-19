@@ -23,7 +23,6 @@ import {
 import { Reveal } from '@/components/invitation/reveal'
 import {
   eventDateParts,
-  groupEventsBySide,
   inviteeInSentence,
   inviteeName,
   SIDE_LABEL,
@@ -86,7 +85,6 @@ export default function SongHyTemplate({
   calendarCouple,
 }: TemplateProps) {
   const date = eventDateParts(featured.startAt)
-  const groups = guest ? null : groupEventsBySide(events)
 
   return (
     <InvitationShell
@@ -252,71 +250,16 @@ export default function SongHyTemplate({
       {/* ---------- Sự kiện ---------- */}
       <Paper>
         <Heading>Lễ cưới</Heading>
-        {groups ? (
-          groups.map((group) => (
-            <div key={group.side} className="mt-10">
-              <p className="text-center text-xs tracking-[0.35em] text-(--sh-ink)/60 uppercase">
-                {group.label}
-              </p>
-              <div className="mt-4 space-y-5">
-                {group.events.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    actions={
-                      <EventActions event={event} couple={calendarCouple} {...actionStyle} />
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="mt-10 space-y-5">
-            {events.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                actions={<EventActions event={event} couple={calendarCouple} {...actionStyle} />}
-              />
-            ))}
-          </div>
-        )}
+        <div className="mt-10 space-y-5">
+          {events.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              actions={<EventActions event={event} couple={calendarCouple} {...actionStyle} />}
+            />
+          ))}
+        </div>
       </Paper>
-
-      {/* ---------- Chuyện tình ---------- */}
-      {invitation.story.length > 0 && (
-        <Paper light>
-          <Heading>Chuyện của chúng mình</Heading>
-          <ol className="relative mt-10 space-y-10 border-l border-(--sh-gold) pl-6">
-            {invitation.story.map((item) => (
-              <Reveal as="li" variant="left" key={item.title} className="relative">
-                <span
-                  aria-hidden
-                  className="absolute top-1.5 -left-[1.95rem] size-3 rotate-45 border border-(--sh-gold) bg-(--sh-red)"
-                />
-                <p className="text-xs tracking-[0.25em] text-(--sh-ink)/60 uppercase">
-                  {item.date}
-                </p>
-                <h3 className="mt-1 font-(family-name:--font-sh-display) text-xl text-(--sh-red)">
-                  {item.title}
-                </h3>
-                <p className="mt-2 leading-relaxed">{item.text}</p>
-                {item.photo && (
-                  <Image
-                    src={item.photo.src}
-                    width={item.photo.width}
-                    height={item.photo.height}
-                    alt={item.photo.alt}
-                    sizes="(min-width: 448px) 384px, 85vw"
-                    className="mt-4 h-auto w-full border-4 border-white shadow-sm"
-                  />
-                )}
-              </Reveal>
-            ))}
-          </ol>
-        </Paper>
-      )}
 
       {/* ---------- Album ---------- */}
       {invitation.gallery.length > 0 && (

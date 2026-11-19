@@ -135,8 +135,9 @@ export function EventsForm({ wedding, onSave }: EditorFormProps) {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6" noValidate>
       <p className="text-sm text-muted-foreground">
-        Khách nhà trai chỉ thấy sự kiện của nhà trai và sự kiện chung; khách nhà gái cũng vậy. Giờ
-        tính theo giờ Việt Nam.
+        Link riêng của khách nhà trai hiện sự kiện nhà trai và sự kiện chung; khách nhà gái cũng
+        vậy. Link chung chỉ mời chung chung: hiện một sự kiện &quot;Chung hai bên&quot; (nếu có),
+        không thì tiệc cưới sớm nhất. Giờ tính theo giờ Việt Nam.
       </p>
 
       {drafts.length === 0 && (

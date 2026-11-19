@@ -34,6 +34,13 @@
           }
         ]
       }
+    ],
+    "redirects": [
+      {
+        "source": "/m",
+        "destination": "/",
+        "type": 301
+      }
     ]
   },
   "emulators": {

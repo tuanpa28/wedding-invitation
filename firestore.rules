@@ -26,7 +26,6 @@ service cloud.firestore {
       return d.templateId in ['song-hy', 'nga', 'hoa-co']
         && d.groom is map && d.bride is map
         && d.events is list && d.events.size() <= 12
-        && d.get('story', []) is list && d.get('story', []).size() <= 10
         && d.get('gallery', []) is list && d.get('gallery', []).size() <= 40
         && d.get('inviteMessage', '') is string && d.get('inviteMessage', '').size() <= 1000
         && d.get('rsvpEnabled', true) is bool

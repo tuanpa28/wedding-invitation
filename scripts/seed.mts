@@ -38,10 +38,12 @@ const app = initializeApp(prod ? { credential: applicationDefault(), projectId }
 const db = getFirestore(app)
 db.settings({ ignoreUndefinedProperties: true })
 
-const adminEmails = (process.env.ADMIN_EMAILS ?? (prod ? '' : EMULATOR_ADMIN))
+const envAdmins = (process.env.ADMIN_EMAILS ?? '')
   .split(',')
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean)
+// Emulator luôn có thêm tài khoản thử để đăng nhập trang quản lý ở máy
+const adminEmails = prod ? envAdmins : [...new Set([EMULATOR_ADMIN, ...envAdmins])]
 if (prod && adminEmails.length === 0) {
   throw new Error('Thiếu ADMIN_EMAILS trong .env (email Google của người quản trị)')
 }

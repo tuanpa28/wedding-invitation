@@ -84,17 +84,6 @@ export const eventsSchema = z.object({
     .max(LIMITS.events, `Tối đa ${LIMITS.events} sự kiện`),
 })
 
-export const storyItemSchema = z.object({
-  date: requiredText(40, 'Nhập mốc thời gian'),
-  title: requiredText(80, 'Nhập tiêu đề'),
-  text: requiredText(600, 'Nhập nội dung'),
-  photo: photoSchema.optional(),
-})
-
-export const storySchema = z.object({
-  story: z.array(storyItemSchema).max(LIMITS.storyItems, `Tối đa ${LIMITS.storyItems} mục`),
-})
-
 export const gallerySchema = z.object({
   gallery: z.array(photoSchema).max(LIMITS.photos, `Tối đa ${LIMITS.photos} ảnh`),
 })
@@ -104,7 +93,6 @@ export const coverSchema = z.object({ cover: photoSchema.nullable() })
 export const musicSchema = z.object({ musicUrl: httpsUrl.nullable() })
 
 export type EventInput = z.infer<typeof eventSchema>
-export type StoryItemInput = z.infer<typeof storyItemSchema>
 export type PhotoInput = z.infer<typeof photoSchema>
 
 /** Bỏ mọi giá trị `undefined` (Firestore không nhận) — giữ nguyên `null` để xoá giá trị */

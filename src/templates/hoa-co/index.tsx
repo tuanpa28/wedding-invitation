@@ -24,7 +24,6 @@ import {
 import { Reveal } from '@/components/invitation/reveal'
 import {
   eventDateParts,
-  groupEventsBySide,
   inviteeInSentence,
   inviteeName,
   SIDE_LABEL,
@@ -85,7 +84,6 @@ export default function HoaCoTemplate({
   calendarCouple,
 }: TemplateProps) {
   const date = eventDateParts(featured.startAt)
-  const groups = guest ? null : groupEventsBySide(events)
 
   return (
     <InvitationShell
@@ -225,64 +223,12 @@ export default function HoaCoTemplate({
         {/* ---------- Sự kiện ---------- */}
         <section>
           <Heading className="mb-6 pt-4">Lễ cưới</Heading>
-          {groups ? (
-            groups.map((group) => (
-              <div key={group.side} className="mt-6 first:mt-0">
-                <p className="mb-3 text-center text-xs tracking-[0.3em] text-(--hc-moss) uppercase">
-                  {group.label}
-                </p>
-                <div className="space-y-4">
-                  {group.events.map((event) => (
-                    <EventCard key={event.id} event={event} calendarCouple={calendarCouple} />
-                  ))}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="space-y-4">
-              {events.map((event) => (
-                <EventCard key={event.id} event={event} calendarCouple={calendarCouple} />
-              ))}
-            </div>
-          )}
+          <div className="space-y-4">
+            {events.map((event) => (
+              <EventCard key={event.id} event={event} calendarCouple={calendarCouple} />
+            ))}
+          </div>
         </section>
-
-        {/* ---------- Chuyện tình ---------- */}
-        {invitation.story.length > 0 && (
-          <section>
-            <Heading className="mb-6 pt-4">Chuyện tình mình</Heading>
-            <div className="space-y-10">
-              {invitation.story.map((item, i) => (
-                <Reveal
-                  key={item.title}
-                  variant={i % 2 === 0 ? 'left' : 'right'}
-                  className="text-center"
-                >
-                  {item.photo && (
-                    <Image
-                      src={item.photo.src}
-                      width={item.photo.width}
-                      height={item.photo.height}
-                      alt={item.photo.alt}
-                      sizes="(min-width: 448px) 400px, 90vw"
-                      className={cn(
-                        'h-auto w-full rounded-[2rem] border-[5px] border-(--hc-card) shadow-sm',
-                        i % 2 === 0 ? '-rotate-1' : 'rotate-1',
-                      )}
-                    />
-                  )}
-                  <p className="mt-5 text-xs tracking-[0.25em] text-(--hc-moss) uppercase">
-                    {item.date}
-                  </p>
-                  <h3 className="mt-1 font-(family-name:--font-hc-script) text-3xl text-(--hc-leaf)">
-                    {item.title}
-                  </h3>
-                  <p className="mx-auto mt-2 max-w-sm leading-relaxed">{item.text}</p>
-                </Reveal>
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* ---------- Album ---------- */}
         {invitation.gallery.length > 0 && (

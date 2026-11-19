@@ -164,3 +164,9 @@ Mỗi phase test xong và chạy ổn mới sang phase tiếp theo.
   - Máy tính: hai cột, cột trái (khách mời, giờ, ngày âm, nơi tổ chức, bản đồ nhúng Google Maps không cần key) đứng yên khi cuộn; điện thoại: một cột.
   - Cột phải: ảnh lớn parallax, câu trích dẫn, chân dung + bố mẹ hai bên, "WELCOME TO WEDDING", dải phim đen (ảnh + đếm ngược), ảnh có chữ dọc "MY LOVE · FOREVER", lịch tháng nền đen với trái tim đập ở ngày cưới, các nghi lễ khác, album, hộp quà (bấm mở → VietQR), RSVP, lời chúc (khung cuộn), "Thank you".
   - Không có phần chuyện tình (theo yêu cầu). Thiệp đã lưu mã mẫu cũ `thanh-lich` tự dùng Song Hỷ.
+- **Điều chỉnh (20/11/2026):**
+  - Bỏ hẳn phần chuyện tình (kiểu dữ liệu, form trong admin, các template, dữ liệu mẫu, rules).
+  - Trang quản lý bỏ khung điện thoại xem trước; thay bằng nút mở thiệp ở tab mới (link chung / như khách nhà trai / nhà gái).
+  - Link chung chỉ hiện tiệc cưới chính (`mainEvent`: sự kiện chung hai bên → tiệc cưới sớm nhất → sự kiện sớm nhất); link riêng giữ đủ lịch của bên khách.
+  - `/m` không kèm mã → chuyển về `/` (redirect 301 của Firebase Hosting + phòng hờ ở trình duyệt).
+  - Seed emulator luôn có thêm `admin@thiephong.test` kể cả khi `.env` có `ADMIN_EMAILS` thật.

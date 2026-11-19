@@ -13,7 +13,6 @@ export const LIMITS = {
   weddingsPerUser: 3,
   membersPerWedding: 4,
   events: 12,
-  storyItems: 10,
   photos: 40,
   musicBytes: 8 * 1024 * 1024,
   imageBytes: 10 * 1024 * 1024,

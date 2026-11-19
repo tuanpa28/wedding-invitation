@@ -104,7 +104,6 @@ export const EMPTY_WEDDING: WeddingDoc = {
   groom: { fullName: 'Chú rể', shortName: 'Chú rể' },
   bride: { fullName: 'Cô dâu', shortName: 'Cô dâu' },
   events: [],
-  story: [],
   gallery: [],
 }
 

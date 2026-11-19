@@ -2,6 +2,7 @@ import {
   coupleOrder,
   eventsForSide,
   featuredEvent,
+  mainEvent,
   type CalendarCouple,
 } from '@/lib/invitation/helpers'
 import type { Guest, Invitation, Person, WeddingEvent } from '@/lib/invitation/types'
@@ -10,7 +11,7 @@ import type { Guest, Invitation, Person, WeddingEvent } from '@/lib/invitation/t
 export interface TemplateProps {
   invitation: Invitation
   guest?: Guest
-  /** Sự kiện khách được thấy, đã sắp xếp theo thời gian */
+  /** Sự kiện khách được thấy, đã sắp xếp theo thời gian (link chung: chỉ tiệc cưới chính) */
   events: WeddingEvent[]
   /** Sự kiện chính: in ngày lớn + đếm ngược */
   featured: WeddingEvent
@@ -20,8 +21,10 @@ export interface TemplateProps {
 }
 
 export function buildTemplateProps(invitation: Invitation, guest?: Guest): TemplateProps {
-  const events = eventsForSide(invitation.events, guest?.side)
-  const featured = featuredEvent(invitation.events, guest?.side) ?? events[0]
+  // Link chung: chỉ tiệc cưới chính. Link riêng: mọi sự kiện của bên khách + sự kiện chung.
+  const main = guest ? undefined : mainEvent(invitation.events)
+  const events = main ? [main] : eventsForSide(invitation.events, guest?.side)
+  const featured = main ?? featuredEvent(invitation.events, guest?.side) ?? events[0]
   return {
     invitation,
     guest,

@@ -63,12 +63,13 @@ Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Host
 - **Thông tin:** tên, họ tên, thứ bậc, bố mẹ, địa chỉ hai bên; câu trích dẫn.
 - **Sự kiện:** từng bên nhà trai / nhà gái / chung. Khách chỉ thấy sự kiện của bên mình.
 - **Ảnh & nhạc:** ảnh bìa, album (tối đa 40 ảnh), nhạc nền (tải file ≤ 8 MB hoặc dán link https).
-- **Chuyện tình:** các cột mốc của hai bạn.
 - **Khách mời:** thêm từng khách hoặc nhập Excel (có file mẫu), mỗi khách một link `/m/<mã>`; chép link / chép tin nhắn mời / mã QR; theo dõi ai đã mở thiệp (cập nhật ngay); lọc theo bên, nhóm, trạng thái; xuất Excel. Tin nhắn mời mẫu sửa được.
 - **Phản hồi:** bật/tắt form xác nhận tham dự và sổ lưu bút, đặt hạn xác nhận; xem số người sẽ đến theo từng bên, ai chưa phản hồi, xuất Excel; ẩn/hiện/xoá lời chúc.
 - **Mừng cưới:** tài khoản ngân hàng nhà trai / nhà gái → thiệp có mục mừng cưới với QR VietQR (app ngân hàng nào cũng quét được) và nút chép số tài khoản. Lưu xong nên quét thử QR trong khung xem trước bằng app ngân hàng thật.
 
-Khung điện thoại bên phải hiện đúng thiệp khách thấy (đổi "Link chung / Khách nhà trai / Khách nhà gái") và tải lại sau mỗi lần lưu.
+Nút **Xem thiệp** (Link chung / Như khách nhà trai / Như khách nhà gái) mở thiệp ở tab mới, không tính là lượt mở của khách.
+
+**Link chung và link riêng:** link chung (`/`) chỉ mời chung chung — một sự kiện "Chung hai bên" nếu có, không thì tiệc cưới sớm nhất. Link riêng (`/m/<mã>`) có tên khách và đủ lịch của bên khách (nhà trai hoặc nhà gái, chọn khi tạo khách). Vào `/m` không kèm mã sẽ tự về `/`.
 
 **Khi chạy emulator:** bấm "Đăng nhập với Google", trong cửa sổ của Auth Emulator chọn _Add new account_ và nhập `admin@thiephong.test` (admin thử do `npm run seed` tạo).
 
