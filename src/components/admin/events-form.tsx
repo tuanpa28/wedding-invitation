@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { LIMITS } from '@/lib/invitation/defaults'
+import { mainEvent } from '@/lib/invitation/helpers'
 import { isoToVnLocal, vnLocalToIso } from '@/lib/invitation/slug'
 import type { EventSide, EventType, WeddingEvent } from '@/lib/invitation/types'
 import { EVENT_TYPE_LABEL, eventsSchema } from '@/lib/validators/wedding'
@@ -131,6 +132,12 @@ export function EventsForm({ wedding, onSave }: EditorFormProps) {
   }
 
   const full = drafts.length >= LIMITS.events
+  // Sự kiện duy nhất hiện ở link chung (cùng quy tắc với trang thiệp)
+  const mainKey = mainEvent(
+    drafts
+      .filter((d) => d.local)
+      .map((d) => ({ ...toInput(d), mapUrl: undefined, lunarText: undefined })),
+  )?.id
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6" noValidate>
@@ -157,7 +164,14 @@ export function EventsForm({ wedding, onSave }: EditorFormProps) {
               data-side={d.side}
             >
               <div className="mb-4 flex items-center justify-between gap-2">
-                <p className="font-display text-lg">{d.title || EVENT_TYPE_LABEL[d.type]}</p>
+                <p className="flex flex-wrap items-center gap-2 font-display text-lg">
+                  {d.title || EVENT_TYPE_LABEL[d.type]}
+                  {d.key === mainKey && (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 font-sans text-xs font-medium text-primary">
+                      Hiện ở link chung
+                    </span>
+                  )}
+                </p>
                 <div className="flex gap-1">
                   <Button
                     type="button"

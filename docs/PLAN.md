@@ -170,3 +170,25 @@ Mỗi phase test xong và chạy ổn mới sang phase tiếp theo.
   - Link chung chỉ hiện tiệc cưới chính (`mainEvent`: sự kiện chung hai bên → tiệc cưới sớm nhất → sự kiện sớm nhất); link riêng giữ đủ lịch của bên khách.
   - `/m` không kèm mã → chuyển về `/` (redirect 301 của Firebase Hosting + phòng hờ ở trình duyệt).
   - Seed emulator luôn có thêm `admin@thiephong.test` kể cả khi `.env` có `ADMIN_EMAILS` thật.
+- **Tối ưu trang quản lý (20/11/2026):**
+  - Tab mới **Tổng quan** (mở đầu tiên): đếm ngược tới sự kiện sắp tới, link thiệp chung (chép/mở), số liệu khách · đã mở · sẽ đến · lời chúc, danh sách việc cần chuẩn bị (bấm để tới đúng tab), hoạt động gần đây theo thời gian thực.
+  - Menu dọc bên trái trên máy tính, thanh ngang dính đầu trang trên điện thoại; tab nằm trên URL (`/admin#guests`), tải lại hay bấm Back vẫn đúng chỗ.
+  - Đổi tab không mất phần đang sửa (các tab chỉ ẩn đi); tab có thay đổi chưa lưu hiện chấm đỏ; đóng trang khi chưa lưu thì trình duyệt hỏi lại; **Ctrl/⌘+S** để lưu.
+  - Khách, RSVP, lời chúc chỉ mở mỗi listener Firestore một lần cho cả trang (trước đây tab Khách mời và Phản hồi mỗi tab tự mở), đỡ tốn lượt đọc.
+  - Khách mời: lọc theo phản hồi (sẽ đến / không đến / chưa trả lời), sắp xếp (tên, mở gần đây, nhóm), nút bỏ lọc, hiện phản hồi và lời nhắn ngay dưới tên khách.
+  - Phản hồi: lọc nhanh và tìm kiếm RSVP, lọc lời chúc đang hiện / đã ẩn, hỏi lại trước khi xoá (trước đây xoá RSVP không hỏi).
+  - Ảnh: kéo thả ảnh vào album, xoá ảnh có nút Hoàn tác. Sự kiện: nhãn "Hiện ở link chung" cho sự kiện link chung đang dùng.
+  - Test: 57 test logic.
+- **Trang quản lý — đợt 2 (20/11/2026):**
+  - **Luồng gửi thiệp:** khách có trạng thái `sentAt` (rules chỉ cho admin ghi, kiểu timestamp). Chép tin nhắn / chép link / Chia sẻ (Web Share API, điện thoại mở Zalo, Messenger…) tự đánh dấu đã gửi; bấm trạng thái để đánh dấu tay; lọc chưa gửi / đã gửi chưa mở / đã mở; sắp xếp "chưa gửi lên đầu"; đánh dấu hàng loạt theo bộ lọc. Tab Khách mời thay 4 ô thống kê bằng một dòng tiến độ gửi. Tổng quan và danh sách chuẩn bị có thêm bước "Gửi thiệp cho khách". Excel khách có cột "Đã gửi".
+  - **Nhắc deploy lại:** lúc build, `/admin` ghi dấu vết bản dựng sẵn (mẫu, ảnh bìa, tên hai người, ngày sự kiện sớm nhất — `src/lib/prerender.ts`); nội dung hiện tại khác thì hiện thông báo chạy `npm run deploy`.
+  - **Menu:** gộp Mẫu thiệp + Ảnh & nhạc thành **Giao diện**; chia nhóm "Chuẩn bị thiệp" (Thông tin, Sự kiện, Giao diện, Mừng cưới) và "Gửi & theo dõi" (Khách mời, Phản hồi). Link cũ `#template`, `#media` vẫn mở đúng tab.
+  - **Kỷ niệm & sao lưu:** xuất sổ lưu bút ra Excel; Tổng quan có nút tải bản sao lưu JSON (thiệp, khách, phản hồi, lời chúc).
+  - Test: 61 test logic, 23 test rules.
+- **Trang quản lý — đợt 3 (20/11/2026):**
+  - Dòng khách chỉ còn Chia sẻ + Chép tin nhắn; các thao tác khác (chép link, mã QR, xem thiệp như khách, đánh dấu đã gửi, sửa, xoá) gom vào menu **⋯**.
+  - Ảnh bìa vẫn là bước bắt buộc (ảnh có sẵn chỉ là ảnh mẫu để xem thử); câu chữ trong admin nói rõ điều này.
+  - **Người quản lý** (nhóm Cài đặt): admin thêm/bớt email trong `site/admins`. Rules: chỉ admin sửa, chỉ field `emails`, 1–10 email, phải còn email của chính người sửa (không tự khoá mình).
+  - **Test trình duyệt** `npm run test:e2e`: Playwright trên Edge có sẵn (máy tính + Pixel 7), build site trỏ emulator rồi chạy trong `firebase emulators:exec` (Firestore + Auth + Hosting 5005). 5 kịch bản: Tổng quan (kèm kiểm tra trang không tràn ngang), giữ phần đang sửa + Ctrl+S, luồng gửi thiệp + menu ⋯, khách mở thiệp → admin thấy ngay, người quản lý (thêm → người đó đăng nhập được → bỏ quyền).
+  - Test trình duyệt bắt được một lỗi thật: tiêu đề nhóm menu (sr-only, `position:absolute`) thoát khỏi vùng cuộn ngang của menu → trang trên điện thoại rộng 885px và bị thu nhỏ. Sửa bằng `relative` cho danh sách menu.
+  - Test: 61 logic, 24 rules, 10 trình duyệt.

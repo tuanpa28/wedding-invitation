@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { isCloudinaryConfigured, uploadToCloudinary } from '@/lib/cloudinary'
 import { DEFAULT_COVER, LIMITS } from '@/lib/invitation/defaults'
 import type { Photo } from '@/lib/invitation/types'
+import { cn } from '@/lib/utils'
 import { musicSchema } from '@/lib/validators/wedding'
 import { errorMessage, type EditorFormProps } from './editor-types'
 import { Field, SectionTitle } from './field'
@@ -22,9 +23,10 @@ export function MediaForm({ wedding, onSave }: EditorFormProps) {
     <div className="flex flex-col gap-10">
       {!uploadsEnabled && (
         <p className="rounded-xl border border-dashed bg-card p-4 text-sm text-muted-foreground">
-          Chưa cấu hình Cloudinary nên chưa tải ảnh/nhạc lên được. Thiệp đang dùng ảnh bìa mặc định.
-          Thêm <code className="font-mono text-foreground">NEXT_PUBLIC_CLOUDINARY_*</code> vào{' '}
-          <code className="font-mono text-foreground">.env.local</code> theo README.
+          Chưa cấu hình Cloudinary nên chưa tải ảnh/nhạc lên được. Thiệp đang dùng ảnh bìa mẫu (chỉ
+          để xem thử). Thêm{' '}
+          <code className="font-mono text-foreground">NEXT_PUBLIC_CLOUDINARY_*</code> vào{' '}
+          <code className="font-mono text-foreground">.env</code> theo README rồi build lại.
         </p>
       )}
       <CoverSection wedding={wedding} uploadsEnabled={uploadsEnabled} onSave={onSave} />
@@ -97,7 +99,7 @@ function CoverSection({ wedding, uploadsEnabled, onSave }: Props) {
           />
           {!wedding.cover && (
             <span className="absolute inset-x-0 bottom-0 bg-black/55 px-2 py-1 text-center text-[11px] text-white">
-              Ảnh mặc định
+              Ảnh mẫu — cần thay
             </span>
           )}
         </div>
@@ -120,7 +122,7 @@ function CoverSection({ wedding, uploadsEnabled, onSave }: Props) {
                 save(null).catch((e) => toast.error(errorMessage(e, 'Không lưu được')))
               }
             >
-              Dùng ảnh mặc định
+              Bỏ ảnh, về ảnh mẫu
             </Button>
           )}
         </div>
@@ -133,15 +135,26 @@ function CoverSection({ wedding, uploadsEnabled, onSave }: Props) {
 function GallerySection({ wedding, uploadsEnabled, onSave }: Props) {
   const input = useRef<HTMLInputElement>(null)
   const [progress, setProgress] = useState<string | null>(null)
+  const [dragging, setDragging] = useState(false)
   const photos = wedding.gallery
+  const canAdd = uploadsEnabled && progress === null && photos.length < LIMITS.photos
 
   async function save(next: Photo[]) {
     await onSave({ gallery: next })
   }
 
-  async function onFiles(event: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []).slice(0, LIMITS.photos - photos.length)
+  function onPick(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? [])
     event.target.value = ''
+    void addFiles(files)
+  }
+
+  async function addFiles(all: File[]) {
+    const images = all.filter((f) => f.type.startsWith('image/'))
+    const files = images.slice(0, LIMITS.photos - photos.length)
+    if (images.length > files.length) {
+      toast.warning(`Album tối đa ${LIMITS.photos} ảnh, chỉ thêm ${files.length} ảnh đầu`)
+    }
     if (!files.length) return
 
     const added: Photo[] = []
@@ -167,6 +180,17 @@ function GallerySection({ wedding, uploadsEnabled, onSave }: Props) {
 
   function change(next: Photo[]) {
     save(next).catch((e) => toast.error(errorMessage(e, 'Không lưu được album')))
+  }
+
+  function remove(index: number) {
+    const before = photos
+    save(photos.filter((_, j) => j !== index))
+      .then(() =>
+        toast.success('Đã xoá ảnh', {
+          action: { label: 'Hoàn tác', onClick: () => change(before) },
+        }),
+      )
+      .catch((e) => toast.error(errorMessage(e, 'Không lưu được album')))
   }
 
   function move(index: number, delta: number) {
@@ -229,7 +253,7 @@ function GallerySection({ wedding, uploadsEnabled, onSave }: Props) {
                   type="button"
                   size="icon-xs"
                   variant="secondary"
-                  onClick={() => change(photos.filter((_, j) => j !== i))}
+                  onClick={() => remove(i)}
                   title="Xoá ảnh"
                 >
                   <Trash2 />
@@ -240,19 +264,45 @@ function GallerySection({ wedding, uploadsEnabled, onSave }: Props) {
         </ul>
       )}
 
-      <div className="flex items-center gap-3">
-        <input ref={input} type="file" accept="image/*" multiple hidden onChange={onFiles} />
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => input.current?.click()}
-          disabled={!uploadsEnabled || progress !== null || photos.length >= LIMITS.photos}
-        >
-          {progress ? <Loader2 className="animate-spin" /> : <ImagePlus />}
-          {progress ?? 'Thêm ảnh'}
-        </Button>
-        <p className="text-xs text-muted-foreground">Chọn nhiều ảnh một lúc được.</p>
-      </div>
+      <input ref={input} type="file" accept="image/*" multiple hidden onChange={onPick} />
+      {/* Kéo thả ảnh từ máy vào khung, hoặc bấm để chọn */}
+      <button
+        type="button"
+        onClick={() => input.current?.click()}
+        disabled={!canAdd}
+        onDragOver={(e) => {
+          if (!canAdd) return
+          e.preventDefault()
+          setDragging(true)
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault()
+          setDragging(false)
+          if (canAdd) void addFiles(Array.from(e.dataTransfer.files))
+        }}
+        className={cn(
+          'flex flex-col items-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-6 text-center transition outline-none focus-visible:ring-3 focus-visible:ring-ring/40 enabled:hover:border-primary/50 enabled:hover:bg-primary/5 disabled:opacity-60',
+          dragging && 'border-primary bg-primary/10',
+        )}
+      >
+        {progress ? (
+          <Loader2 className="size-6 animate-spin text-primary" />
+        ) : (
+          <ImagePlus className="size-6 text-muted-foreground" />
+        )}
+        <span className="text-sm font-medium">
+          {progress ??
+            (photos.length >= LIMITS.photos
+              ? 'Album đã đủ ảnh'
+              : dragging
+                ? 'Thả ảnh vào đây'
+                : 'Kéo thả ảnh vào đây, hoặc bấm để chọn')}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          Chọn nhiều ảnh một lúc được · tối đa 10 MB mỗi ảnh
+        </span>
+      </button>
     </section>
   )
 }

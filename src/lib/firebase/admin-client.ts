@@ -21,6 +21,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
   writeBatch,
@@ -90,6 +91,30 @@ export async function checkIsAdmin(): Promise<boolean> {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Người quản lý                                                       */
+/* ------------------------------------------------------------------ */
+
+const adminsRef = () => doc(getAdminDb(), 'site', 'admins')
+
+/** Danh sách email quản trị, cập nhật ngay khi người khác thêm/bớt */
+export function subscribeAdmins(
+  onChange: (emails: string[]) => void,
+  onError: (error: unknown) => void,
+) {
+  return onSnapshot(
+    adminsRef(),
+    (snap) => onChange(((snap.data()?.emails as string[] | undefined) ?? []).slice()),
+    onError,
+  )
+}
+
+/** Lưu danh sách email quản trị (rules không cho tự xoá mình, tối đa 10 email) */
+export const saveAdmins = (emails: string[]) => updateDoc(adminsRef(), { emails })
+
+/** Email của tài khoản đang đăng nhập (chữ thường) */
+export const currentAdminEmail = () => getAdminAuth().currentUser?.email?.toLowerCase() ?? ''
+
 const weddingRef = () => doc(getAdminDb(), 'site', 'wedding')
 
 /** Nội dung thiệp hiện tại (null nếu chưa có — project mới) */
@@ -134,8 +159,9 @@ export async function saveWedding(
 /* ------------------------------------------------------------------ */
 
 /** Khách trong trang quản lý: dữ liệu + trạng thái đã mở thiệp */
-export interface AdminGuest extends GuestDoc {
+export interface AdminGuest extends Omit<GuestDoc, 'sentAt'> {
   code: string
+  sentAt?: Date
   firstOpenedAt?: Date
   lastOpenedAt?: Date
 }
@@ -149,10 +175,15 @@ export function subscribeGuests(
     collection(getAdminDb(), 'guests'),
     (snap) => {
       const guests = snap.docs.map((d) => {
-        const data = d.data() as GuestDoc & { firstOpenedAt?: Timestamp; lastOpenedAt?: Timestamp }
+        const data = d.data() as GuestDoc & {
+          firstOpenedAt?: Timestamp
+          lastOpenedAt?: Timestamp
+          sentAt?: Timestamp
+        }
         return {
           ...data,
           code: d.id,
+          sentAt: data.sentAt?.toDate(),
           firstOpenedAt: data.firstOpenedAt?.toDate(),
           lastOpenedAt: data.lastOpenedAt?.toDate(),
         }
@@ -183,6 +214,18 @@ export function updateGuest(code: string, fields: GuestFields) {
     group: fields.group ?? deleteField(),
     maxAttendees: fields.maxAttendees ?? deleteField(),
   })
+}
+
+/** Đánh dấu đã gửi / chưa gửi link cho nhiều khách (mỗi lô ≤ 400 thao tác) */
+export async function setGuestsSent(codes: string[], sent: boolean) {
+  const db = getAdminDb()
+  for (let i = 0; i < codes.length; i += 400) {
+    const batch = writeBatch(db)
+    for (const code of codes.slice(i, i + 400)) {
+      batch.update(doc(db, 'guests', code), { sentAt: sent ? serverTimestamp() : deleteField() })
+    }
+    await batch.commit()
+  }
 }
 
 export const deleteGuest = (code: string) => deleteDoc(doc(getAdminDb(), 'guests', code))

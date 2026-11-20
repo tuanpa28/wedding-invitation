@@ -3,16 +3,20 @@
 import {
   FileDown,
   FileUp,
+  ExternalLink,
   Link2,
+  MoreHorizontal,
   MessageSquareText,
   Pencil,
   Plus,
   QrCode,
   Search,
+  Send,
+  Share2,
   Trash2,
   Users,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -25,6 +29,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -33,12 +44,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { deleteGuest, subscribeGuests, type AdminGuest } from '@/lib/firebase/admin-client'
+import {
+  deleteGuest,
+  setGuestsSent,
+  type AdminGuest,
+  type AdminRsvp,
+} from '@/lib/firebase/admin-client'
 import { DEFAULT_INVITE_MESSAGE, generateGuestCode, guestLink, inviteMessage } from '@/lib/guests'
 import { SIDE_LABEL } from '@/lib/invitation/helpers'
 import { slugify } from '@/lib/invitation/slug'
-import { useOrigin } from '@/lib/use-origin'
+import { useSiteOrigin } from '@/lib/use-origin'
 import { cn } from '@/lib/utils'
+import { useAdminData } from '../admin-data'
+import { canShare, copyText, shareText } from '../copy'
 import { errorMessage, type EditorFormProps } from '../editor-types'
 import { GuestDialog } from './guest-dialog'
 import { exportGuests } from './guest-excel'
@@ -47,7 +65,26 @@ import { MessageDialog } from './message-dialog'
 import { QrDialog } from './qr-dialog'
 
 type SideFilter = 'all' | 'groom' | 'bride'
-type OpenFilter = 'all' | 'opened' | 'unopened'
+/** Tiến độ gửi: chưa gửi → đã gửi (chưa mở) → đã mở thiệp */
+type SendFilter = 'all' | 'unsent' | 'sent' | 'opened'
+type RsvpFilter = 'all' | 'attending' | 'declined' | 'pending'
+type SortKey = 'name' | 'recent' | 'group' | 'unsentFirst'
+
+const SORTS: Record<SortKey, (a: AdminGuest, b: AdminGuest) => number> = {
+  name: (a, b) => a.displayName.localeCompare(b.displayName, 'vi'),
+  recent: (a, b) => (b.lastOpenedAt?.getTime() ?? 0) - (a.lastOpenedAt?.getTime() ?? 0),
+  unsentFirst: (a, b) =>
+    Number(Boolean(a.sentAt || a.firstOpenedAt)) - Number(Boolean(b.sentAt || b.firstOpenedAt)) ||
+    a.displayName.localeCompare(b.displayName, 'vi'),
+  group: (a, b) =>
+    (a.group ?? '\uffff').localeCompare(b.group ?? '\uffff', 'vi') ||
+    a.displayName.localeCompare(b.displayName, 'vi'),
+}
+
+const sendState = (g: AdminGuest): Exclude<SendFilter, 'all'> =>
+  g.firstOpenedAt ? 'opened' : g.sentAt ? 'sent' : 'unsent'
+
+const noopSubscribe = () => () => {}
 
 const openedParts = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
@@ -67,26 +104,16 @@ const openedFormat = {
   },
 }
 
-async function copyText(text: string, done: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.success(done)
-  } catch {
-    toast.error('Không chép được, hãy chọn và chép tay')
-  }
-}
-
 /** Quản lý khách mời: danh sách realtime, link riêng, QR, tin nhắn mời, nhập/xuất Excel */
 export function GuestsTab({ wedding, onSave }: EditorFormProps) {
-  const envOrigin = process.env.NEXT_PUBLIC_SITE_URL
-  const pageOrigin = useOrigin()
-  const origin = envOrigin || pageOrigin
-
-  const [guests, setGuests] = useState<AdminGuest[] | null>(null)
+  const origin = useSiteOrigin()
+  const { guests, rsvps } = useAdminData()
   const [query, setQuery] = useState('')
   const [side, setSide] = useState<SideFilter>('all')
-  const [opened, setOpened] = useState<OpenFilter>('all')
+  const [send, setSend] = useState<SendFilter>('all')
+  const [rsvpFilter, setRsvpFilter] = useState<RsvpFilter>('all')
   const [group, setGroup] = useState('all')
+  const [sort, setSort] = useState<SortKey>('name')
 
   const [editing, setEditing] = useState<AdminGuest | 'new' | null>(null)
   const [newCode, setNewCode] = useState('')
@@ -94,15 +121,6 @@ export function GuestsTab({ wedding, onSave }: EditorFormProps) {
   const [messageOpen, setMessageOpen] = useState(false)
   const [qrTarget, setQrTarget] = useState<{ name: string; link: string } | null>(null)
   const [deleting, setDeleting] = useState<AdminGuest | null>(null)
-
-  useEffect(
-    () =>
-      subscribeGuests(setGuests, (error) => {
-        toast.error(errorMessage(error, 'Không tải được danh sách khách'))
-        setGuests([])
-      }),
-    [],
-  )
 
   const codes = useMemo(() => new Set(guests?.map((g) => g.code)), [guests])
   const groups = useMemo(
@@ -113,28 +131,82 @@ export function GuestsTab({ wedding, onSave }: EditorFormProps) {
     [guests],
   )
 
+  // Phản hồi của khách có link riêng (id RSVP = mã khách)
+  const rsvpByCode = useMemo(
+    () => new Map((rsvps ?? []).flatMap((r) => (r.guestCode ? [[r.guestCode, r] as const] : []))),
+    [rsvps],
+  )
+
   const visible = useMemo(() => {
     const q = slugify(query)
-    return (guests ?? []).filter(
-      (g) =>
-        (side === 'all' || g.side === side) &&
-        (opened === 'all' || (opened === 'opened') === Boolean(g.firstOpenedAt)) &&
-        (group === 'all' || g.group === group) &&
-        (!q || slugify(`${g.displayName} ${g.group ?? ''} ${g.code}`).includes(q)),
-    )
-  }, [guests, query, side, opened, group])
+    const rsvpOf = (g: AdminGuest): RsvpFilter => {
+      const r = rsvpByCode.get(g.code)
+      return !r ? 'pending' : r.attending ? 'attending' : 'declined'
+    }
+    return (guests ?? [])
+      .filter(
+        (g) =>
+          (side === 'all' || g.side === side) &&
+          (send === 'all' || sendState(g) === send) &&
+          (rsvpFilter === 'all' || rsvpOf(g) === rsvpFilter) &&
+          (group === 'all' || g.group === group) &&
+          (!q || slugify(`${g.displayName} ${g.group ?? ''} ${g.code}`).includes(q)),
+      )
+      .sort(SORTS[sort])
+  }, [guests, rsvpByCode, query, side, send, rsvpFilter, group, sort])
+
+  const filtered =
+    query !== '' || side !== 'all' || send !== 'all' || rsvpFilter !== 'all' || group !== 'all'
+  function clearFilters() {
+    setQuery('')
+    setSide('all')
+    setSend('all')
+    setRsvpFilter('all')
+    setGroup('all')
+  }
 
   const stats = useMemo(() => {
     const list = guests ?? []
-    const people = (g: AdminGuest) => g.maxAttendees ?? 1
     return {
       total: list.length,
-      groom: list.filter((g) => g.side === 'groom').length,
-      bride: list.filter((g) => g.side === 'bride').length,
+      people: list.reduce((sum, g) => sum + (g.maxAttendees ?? 1), 0),
+      unsent: list.filter((g) => sendState(g) === 'unsent').length,
+      sent: list.filter((g) => sendState(g) !== 'unsent').length,
       opened: list.filter((g) => g.firstOpenedAt).length,
-      people: list.reduce((sum, g) => sum + people(g), 0),
     }
   }, [guests])
+
+  const shareable = useSyncExternalStore(noopSubscribe, canShare, () => false)
+
+  // Gửi link xong (chép tin nhắn / chép link / chia sẻ) thì tự đánh dấu đã gửi
+  function markSent(g: AdminGuest) {
+    if (g.sentAt || g.firstOpenedAt) return
+    setGuestsSent([g.code], true).catch((e) => toast.error(errorMessage(e)))
+  }
+
+  async function toggleSent(g: AdminGuest) {
+    try {
+      await setGuestsSent([g.code], !g.sentAt)
+      toast.success(
+        g.sentAt ? `Đã bỏ đánh dấu ${g.displayName}` : `Đã đánh dấu gửi ${g.displayName}`,
+      )
+    } catch (error) {
+      toast.error(errorMessage(error))
+    }
+  }
+
+  const unsentVisible = visible.filter((g) => sendState(g) === 'unsent')
+  async function markVisibleSent() {
+    try {
+      await setGuestsSent(
+        unsentVisible.map((g) => g.code),
+        true,
+      )
+      toast.success(`Đã đánh dấu ${unsentVisible.length} khách là đã gửi`)
+    } catch (error) {
+      toast.error(errorMessage(error))
+    }
+  }
 
   const template = wedding.inviteMessage ?? DEFAULT_INVITE_MESSAGE
   const messageFor = (g: { displayName: string; code: string }) =>
@@ -164,18 +236,33 @@ export function GuestsTab({ wedding, onSave }: EditorFormProps) {
 
   return (
     <div className="flex flex-col gap-6 pb-10">
-      {/* Thống kê */}
-      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Stat label="Khách mời" value={stats.total} hint={`~${stats.people} người`} />
-        <Stat label="Nhà trai" value={stats.groom} />
-        <Stat label="Nhà gái" value={stats.bride} />
-        <Stat
-          label="Đã mở thiệp"
-          value={stats.opened}
-          hint={stats.total ? `${Math.round((stats.opened / stats.total) * 100)}%` : undefined}
-          accent
-        />
-      </dl>
+      {/* Tiến độ gửi thiệp */}
+      {stats.total > 0 && (
+        <div className="grid gap-2 rounded-xl border bg-card p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+            <p>
+              <span className="font-medium">{stats.total} khách</span>
+              <span className="text-muted-foreground"> · khoảng {stats.people} người</span>
+            </p>
+            <p className="text-muted-foreground">
+              Đã gửi <span className="font-medium text-foreground">{stats.sent}</span> · đã mở{' '}
+              <span className="font-medium text-foreground">{stats.opened}</span> · chưa gửi{' '}
+              <span className="font-medium text-primary">{stats.unsent}</span>
+            </p>
+          </div>
+          <div
+            className="flex h-1.5 overflow-hidden rounded-full bg-muted"
+            role="img"
+            aria-label={`Đã mở ${stats.opened}, đã gửi chưa mở ${stats.sent - stats.opened}, chưa gửi ${stats.unsent}`}
+          >
+            <div className="bg-gold" style={{ width: `${(stats.opened / stats.total) * 100}%` }} />
+            <div
+              className="bg-primary/60"
+              style={{ width: `${((stats.sent - stats.opened) / stats.total) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Thao tác */}
       <div className="flex flex-wrap gap-2">
@@ -199,8 +286,8 @@ export function GuestsTab({ wedding, onSave }: EditorFormProps) {
       </div>
 
       {/* Lọc */}
-      <div className="grid grid-cols-3 gap-2">
-        <label className="relative col-span-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <label className="relative col-span-2 sm:col-span-5">
           <span className="sr-only">Tìm khách</span>
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -221,13 +308,25 @@ export function GuestsTab({ wedding, onSave }: EditorFormProps) {
           ]}
         />
         <FilterSelect
-          label="Trạng thái"
-          value={opened}
-          onChange={(v) => setOpened(v as OpenFilter)}
+          label="Gửi thiệp"
+          value={send}
+          onChange={(v) => setSend(v as SendFilter)}
           options={[
-            ['all', 'Mọi trạng thái'],
+            ['all', 'Mọi trạng thái gửi'],
+            ['unsent', 'Chưa gửi'],
+            ['sent', 'Đã gửi, chưa mở'],
             ['opened', 'Đã mở thiệp'],
-            ['unopened', 'Chưa mở'],
+          ]}
+        />
+        <FilterSelect
+          label="Phản hồi"
+          value={rsvpFilter}
+          onChange={(v) => setRsvpFilter(v as RsvpFilter)}
+          options={[
+            ['all', 'Mọi phản hồi'],
+            ['attending', 'Sẽ đến'],
+            ['declined', 'Không đến'],
+            ['pending', 'Chưa trả lời'],
           ]}
         />
         <FilterSelect
@@ -235,6 +334,17 @@ export function GuestsTab({ wedding, onSave }: EditorFormProps) {
           value={group}
           onChange={setGroup}
           options={[['all', 'Mọi nhóm'], ...groups.map((g) => [g, g] as [string, string])]}
+        />
+        <FilterSelect
+          label="Sắp xếp"
+          value={sort}
+          onChange={(v) => setSort(v as SortKey)}
+          options={[
+            ['name', 'Theo tên'],
+            ['recent', 'Mở thiệp gần đây'],
+            ['group', 'Theo nhóm'],
+            ['unsentFirst', 'Chưa gửi lên đầu'],
+          ]}
         />
       </div>
 
@@ -252,20 +362,63 @@ export function GuestsTab({ wedding, onSave }: EditorFormProps) {
         </div>
       ) : (
         <>
-          <p className="text-sm text-muted-foreground" aria-live="polite">
-            {visible.length === guests.length
-              ? `${guests.length} khách`
-              : `${visible.length} / ${guests.length} khách`}
-          </p>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <p aria-live="polite">
+              {visible.length === guests.length
+                ? `${guests.length} khách`
+                : `${visible.length} / ${guests.length} khách`}
+            </p>
+            {filtered && (
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="h-auto p-0"
+                onClick={clearFilters}
+              >
+                Bỏ lọc
+              </Button>
+            )}
+            {filtered && unsentVisible.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="ml-auto"
+                onClick={markVisibleSent}
+              >
+                <Send /> Đánh dấu {unsentVisible.length} khách đã gửi
+              </Button>
+            )}
+          </div>
+          {visible.length === 0 && (
+            <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+              Không có khách nào khớp bộ lọc.
+            </p>
+          )}
           <ul className="divide-y rounded-xl border bg-card">
             {visible.map((g) => (
               <GuestRow
                 key={g.code}
                 guest={g}
-                onCopyLink={() =>
-                  copyText(guestLink(origin, g.code), `Đã chép link của ${g.displayName}`)
+                rsvp={rsvpByCode.get(g.code)}
+                onCopyLink={async () => {
+                  if (
+                    await copyText(guestLink(origin, g.code), `Đã chép link của ${g.displayName}`)
+                  )
+                    markSent(g)
+                }}
+                onCopyMessage={async () => {
+                  if (await copyText(messageFor(g), 'Đã chép tin nhắn mời')) markSent(g)
+                }}
+                onShare={
+                  shareable
+                    ? async () => {
+                        if (await shareText(messageFor(g))) markSent(g)
+                      }
+                    : undefined
                 }
-                onCopyMessage={() => copyText(messageFor(g), 'Đã chép tin nhắn mời')}
+                onToggleSent={() => void toggleSent(g)}
                 onQr={() => setQrTarget({ name: g.displayName, link: guestLink(origin, g.code) })}
                 onEdit={() => setEditing(g)}
                 onDelete={() => setDeleting(g)}
@@ -316,33 +469,6 @@ export function GuestsTab({ wedding, onSave }: EditorFormProps) {
   )
 }
 
-function Stat({
-  label,
-  value,
-  hint,
-  accent = false,
-}: {
-  label: string
-  value: number
-  hint?: string
-  accent?: boolean
-}) {
-  return (
-    <div
-      className={cn(
-        'rounded-xl border bg-card px-4 py-3',
-        accent && 'border-gold/30 bg-gold-soft/50',
-      )}
-    >
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-1 flex items-baseline gap-2">
-        <span className={cn('font-display text-3xl', accent && 'text-gold')}>{value}</span>
-        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
-      </dd>
-    </div>
-  )
-}
-
 function FilterSelect({
   label,
   value,
@@ -372,15 +498,21 @@ function FilterSelect({
 
 function GuestRow({
   guest,
+  rsvp,
   onCopyLink,
   onCopyMessage,
+  onShare,
+  onToggleSent,
   onQr,
   onEdit,
   onDelete,
 }: {
   guest: AdminGuest
+  rsvp?: AdminRsvp
   onCopyLink: () => void
   onCopyMessage: () => void
+  onShare?: () => void
+  onToggleSent: () => void
   onQr: () => void
   onEdit: () => void
   onDelete: () => void
@@ -405,40 +537,99 @@ function GuestRow({
           {guest.maxAttendees && <span>{guest.maxAttendees} người</span>}
           <span className="font-mono">/m/{guest.code}</span>
         </p>
-      </div>
-      <p
-        className={cn(
-          'flex items-center gap-1.5 text-xs sm:w-44',
-          opened ? 'text-gold' : 'text-muted-foreground',
+        {rsvp && (
+          <p
+            className={cn(
+              'mt-1 text-xs font-medium',
+              rsvp.attending ? 'text-primary' : 'text-muted-foreground',
+            )}
+          >
+            {rsvp.attending ? `✓ Sẽ đến · ${rsvp.count} người` : '✕ Không đến được'}
+            {rsvp.note && (
+              <span className="ml-1 font-normal text-muted-foreground italic">“{rsvp.note}”</span>
+            )}
+          </p>
         )}
-        title={
-          guest.lastOpenedAt ? `Mở gần nhất ${openedFormat.format(guest.lastOpenedAt)}` : undefined
-        }
-      >
-        <span
-          aria-hidden
-          className={cn('size-1.5 rounded-full', opened ? 'bg-gold' : 'bg-border')}
-        />
-        {opened
-          ? `Đã mở ${guest.openCount ?? 1} lần · ${openedFormat.format(opened)}`
-          : 'Chưa mở thiệp'}
-      </p>
+      </div>
+      {opened ? (
+        <p
+          className="flex items-center gap-1.5 text-xs text-gold sm:w-44"
+          title={
+            guest.lastOpenedAt
+              ? `Mở gần nhất ${openedFormat.format(guest.lastOpenedAt)}`
+              : undefined
+          }
+        >
+          <span aria-hidden className="size-1.5 rounded-full bg-gold" />
+          Đã mở {guest.openCount ?? 1} lần · {openedFormat.format(opened)}
+        </p>
+      ) : (
+        <button
+          type="button"
+          onClick={onToggleSent}
+          title={guest.sentAt ? 'Bấm để bỏ đánh dấu đã gửi' : 'Bấm để đánh dấu đã gửi'}
+          className={cn(
+            '-mx-1.5 flex w-fit items-center gap-1.5 rounded-md px-1.5 py-0.5 text-left text-xs transition outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 sm:w-44',
+            guest.sentAt ? 'text-primary' : 'text-muted-foreground',
+          )}
+        >
+          <span
+            aria-hidden
+            className={cn('size-1.5 rounded-full', guest.sentAt ? 'bg-primary' : 'bg-border')}
+          />
+          {guest.sentAt
+            ? `Đã gửi ${openedFormat.format(guest.sentAt).split(' ')[0]} · chưa mở`
+            : 'Chưa gửi · đánh dấu đã gửi'}
+        </button>
+      )}
       <div className="flex gap-1">
-        <IconButton label="Chép link" onClick={onCopyLink}>
-          <Link2 />
-        </IconButton>
+        {onShare && (
+          <IconButton label="Chia sẻ (Zalo, Messenger…)" onClick={onShare}>
+            <Share2 />
+          </IconButton>
+        )}
         <IconButton label="Chép tin nhắn mời" onClick={onCopyMessage}>
           <MessageSquareText />
         </IconButton>
-        <IconButton label="Mã QR" onClick={onQr}>
-          <QrCode />
-        </IconButton>
-        <IconButton label="Sửa" onClick={onEdit}>
-          <Pencil />
-        </IconButton>
-        <IconButton label="Xoá" onClick={onDelete}>
-          <Trash2 />
-        </IconButton>
+        {/* Thao tác ít dùng gom vào menu để dòng khách gọn, khó bấm nhầm trên điện thoại */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              title="Thao tác khác"
+              aria-label={`Thao tác khác cho ${guest.displayName}`}
+            >
+              <MoreHorizontal />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={onCopyLink}>
+              <Link2 /> Chép link
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onQr}>
+              <QrCode /> Mã QR
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <a href={`/m/${guest.code}?preview&motion=full`} target="_blank" rel="noreferrer">
+                <ExternalLink /> Xem thiệp như khách
+              </a>
+            </DropdownMenuItem>
+            {!opened && (
+              <DropdownMenuItem onSelect={onToggleSent}>
+                <Send /> {guest.sentAt ? 'Bỏ đánh dấu đã gửi' : 'Đánh dấu đã gửi'}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onEdit}>
+              <Pencil /> Sửa
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+              <Trash2 /> Xoá khách
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </li>
   )

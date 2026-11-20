@@ -15,6 +15,7 @@ import {
 } from '@/lib/firebase/admin-client'
 import { USE_EMULATOR } from '@/lib/firebase/config'
 import type { WeddingDoc } from '@/lib/invitation/types'
+import type { PrerenderStamp } from '@/lib/prerender'
 import { WeddingEditor } from './wedding-editor'
 import { Wordmark } from './wordmark'
 
@@ -26,7 +27,7 @@ type State =
   | { status: 'ready'; user: User; wedding: WeddingDoc | null }
 
 /** Trang quản lý: đăng nhập Google → kiểm tra email trong danh sách admin → trình sửa thiệp */
-export function AdminApp() {
+export function AdminApp({ built }: { built: PrerenderStamp | null }) {
   const [state, setState] = useState<State>({ status: 'loading' })
 
   // Emulator: cho test tự động đăng nhập mà không cần popup Google
@@ -76,7 +77,7 @@ export function AdminApp() {
         {state.status === 'error' && (
           <Notice title="Chưa tải được dữ liệu">Kiểm tra kết nối mạng rồi tải lại trang.</Notice>
         )}
-        {state.status === 'ready' && <WeddingEditor initial={state.wedding} />}
+        {state.status === 'ready' && <WeddingEditor initial={state.wedding} built={built} />}
       </main>
     </>
   )

@@ -35,9 +35,17 @@ const dateTime = new Intl.DateTimeFormat('vi-VN', {
 export function exportGuests(guests: AdminGuest[], origin: string) {
   return writeXlsxFile(
     [
-      ['Tên gọi', 'Bên', 'Nhóm', 'Số người', 'Mã', 'Link thiệp', 'Số lần mở', 'Mở lần đầu'].map(
-        bold,
-      ),
+      [
+        'Tên gọi',
+        'Bên',
+        'Nhóm',
+        'Số người',
+        'Mã',
+        'Link thiệp',
+        'Đã gửi',
+        'Số lần mở',
+        'Mở lần đầu',
+      ].map(bold),
       ...guests.map((g) => [
         { value: g.displayName },
         { value: SIDE_LABEL[g.side] },
@@ -45,6 +53,7 @@ export function exportGuests(guests: AdminGuest[], origin: string) {
         g.maxAttendees ? { value: g.maxAttendees } : { value: '' },
         { value: g.code },
         { value: guestLink(origin, g.code) },
+        { value: g.sentAt ? dateTime.format(g.sentAt) : '' },
         { value: g.openCount ?? 0 },
         { value: g.firstOpenedAt ? dateTime.format(g.firstOpenedAt) : '' },
       ]),
@@ -57,6 +66,7 @@ export function exportGuests(guests: AdminGuest[], origin: string) {
         { width: 10 },
         { width: 10 },
         { width: 40 },
+        { width: 18 },
         { width: 10 },
         { width: 18 },
       ],

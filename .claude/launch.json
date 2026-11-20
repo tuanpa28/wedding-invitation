@@ -8,6 +8,12 @@
       "port": 5005
     },
     {
+      "name": "thiephong-firebase-only",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "emulators"],
+      "port": 4000
+    },
+    {
       "name": "thiephong-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],

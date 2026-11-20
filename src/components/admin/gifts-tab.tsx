@@ -15,6 +15,7 @@ import {
 import { bankAccountSchema, BANKS, transferNote, vietQrImageUrl } from '@/lib/gifts'
 import { SIDE_LABEL } from '@/lib/invitation/helpers'
 import type { GiftAccount, Side } from '@/lib/invitation/types'
+import { useReportDirty } from './dirty'
 import { errorMessage, type EditorFormProps } from './editor-types'
 import { Field, issuesToErrors, SectionTitle } from './field'
 
@@ -77,6 +78,7 @@ function AccountForm({
     bankBin !== (account?.bankBin ?? '') ||
     accountNumber !== (account?.accountNumber ?? '') ||
     accountName !== (account?.accountName ?? '')
+  useReportDirty(dirty, side)
 
   async function run(action: () => Promise<void>, done: string) {
     setPending(true)

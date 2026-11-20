@@ -12,3 +12,9 @@ export function useOrigin() {
     () => '',
   )
 }
+
+/** Địa chỉ thiệp gửi cho khách: NEXT_PUBLIC_SITE_URL nếu có, không thì origin của trang */
+export function useSiteOrigin() {
+  const origin = useOrigin()
+  return process.env.NEXT_PUBLIC_SITE_URL || origin
+}

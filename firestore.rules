@@ -6,7 +6,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Admin = đăng nhập Google, email đã xác minh và nằm trong site/admins.emails
-    // (danh sách này sửa tay trong Firebase Console hoặc bằng npm run seed).
+    // (thêm/bớt trong trang quản lý → Người quản lý, hoặc bằng npm run seed).
     function isAdmin() {
       return request.auth != null
         && request.auth.token.email_verified == true
@@ -36,9 +36,17 @@ service cloud.firestore {
     }
 
     // Danh sách admin: chỉ admin xem, không ai sửa qua app
+    // Admin thêm/bớt người đồng quản lý. Không được tự xoá mình khỏi danh sách (tránh khoá
+    // mất quyền của mọi người), tối đa 10 email. Tạo/xoá cả document chỉ làm bằng npm run seed.
     match /site/admins {
       allow read: if isAdmin();
-      allow write: if false;
+      allow update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['emails'])
+        && request.resource.data.emails is list
+        && request.resource.data.emails.size() >= 1
+        && request.resource.data.emails.size() <= 10
+        && request.auth.token.email in request.resource.data.emails;
+      allow create, delete: if false;
     }
 
     // Khách mời: khách chỉ đọc được đúng mã của mình (không liệt kê được danh sách)
@@ -59,7 +67,8 @@ service cloud.firestore {
         && (!('group' in d) || (d.group is string && d.group.size() <= 40))
         && (!('maxAttendees' in d)
           || (d.maxAttendees is int && d.maxAttendees >= 1 && d.maxAttendees <= 20))
-        && d.get('openCount', 0) is int;
+        && d.get('openCount', 0) is int
+        && (!('sentAt' in d) || d.sentAt is timestamp);
     }
 
     function wedding() {

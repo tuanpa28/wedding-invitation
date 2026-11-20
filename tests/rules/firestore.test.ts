@@ -102,12 +102,30 @@ describe('site/wedding', () => {
 })
 
 describe('site/admins', () => {
-  it('khách và người lạ không xem được, không ai sửa được qua app', async () => {
+  it('khách và người lạ không xem, không sửa được', async () => {
     await assertFails(getDoc(doc(guest(), 'site/admins')))
     await assertFails(getDoc(doc(stranger(), 'site/admins')))
     await assertSucceeds(getDoc(doc(admin(), 'site/admins')))
-    await assertFails(setDoc(doc(admin(), 'site/admins'), { emails: [ADMIN, 'la@gmail.com'] }))
-    await assertFails(setDoc(doc(stranger(), 'site/admins'), { emails: ['la@gmail.com'] }))
+    await assertFails(updateDoc(doc(stranger(), 'site/admins'), { emails: ['la@gmail.com'] }))
+    await assertFails(updateDoc(doc(guest(), 'site/admins'), { emails: ['la@gmail.com'] }))
+  })
+
+  it('admin thêm/bớt người đồng quản lý nhưng không tự xoá mình', async () => {
+    const ref = doc(admin(), 'site/admins')
+    await assertSucceeds(updateDoc(ref, { emails: [ADMIN, 'vo@gmail.com'] }))
+    // người mới được thêm có quyền admin ngay
+    const co = env
+      .authenticatedContext('co-uid', { email: 'vo@gmail.com', email_verified: true })
+      .firestore()
+    await assertSucceeds(getDoc(doc(co, 'site/admins')))
+    await assertSucceeds(updateDoc(ref, { emails: [ADMIN] }))
+    await assertFails(updateDoc(ref, { emails: ['vo@gmail.com'] })) // tự xoá mình
+    await assertFails(updateDoc(ref, { emails: [] }))
+    await assertFails(
+      updateDoc(ref, { emails: [ADMIN, ...Array.from({ length: 10 }, (_, i) => `a${i}@x.vn`)] }),
+    )
+    await assertFails(updateDoc(ref, { emails: [ADMIN], role: 'owner' }))
+    await assertFails(deleteDoc(ref))
   })
 })
 
@@ -139,6 +157,13 @@ describe('guests', () => {
       updateDoc(doc(admin(), 'guests/nam2027'), { displayName: 'Anh Nam và vợ' }),
     )
     await assertFails(updateDoc(doc(admin(), 'guests/nam2027'), { group: 'x'.repeat(41) }))
+  })
+
+  it('admin đánh dấu đã gửi thiệp; khách không tự sửa được', async () => {
+    await assertSucceeds(updateDoc(doc(admin(), 'guests/nam2027'), { sentAt: serverTimestamp() }))
+    await assertFails(updateDoc(doc(admin(), 'guests/nam2027'), { sentAt: 'hôm qua' }))
+    await assertSucceeds(updateDoc(doc(admin(), 'guests/nam2027'), { sentAt: deleteField() }))
+    await assertFails(updateDoc(doc(guest(), 'guests/nam2027'), { sentAt: serverTimestamp() }))
   })
 
   it('mở thiệp lần đầu: tăng openCount 1, ghi thời điểm mở', async () => {

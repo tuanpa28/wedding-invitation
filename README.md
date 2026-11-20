@@ -57,23 +57,27 @@ Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Host
 
 ## Trang quản lý (`/admin`)
 
-Đăng nhập Google bằng email nằm trong danh sách admin (`site/admins` trong Firestore). Các tab:
+Đăng nhập Google bằng email nằm trong danh sách admin (`site/admins` trong Firestore). Menu xếp theo thứ tự công việc:
 
-- **Mẫu thiệp:** bấm là đổi ngay cho mọi khách, nội dung giữ nguyên.
-- **Thông tin:** tên, họ tên, thứ bậc, bố mẹ, địa chỉ hai bên; câu trích dẫn.
-- **Sự kiện:** từng bên nhà trai / nhà gái / chung. Khách chỉ thấy sự kiện của bên mình.
-- **Ảnh & nhạc:** ảnh bìa, album (tối đa 40 ảnh), nhạc nền (tải file ≤ 8 MB hoặc dán link https).
-- **Khách mời:** thêm từng khách hoặc nhập Excel (có file mẫu), mỗi khách một link `/m/<mã>`; chép link / chép tin nhắn mời / mã QR; theo dõi ai đã mở thiệp (cập nhật ngay); lọc theo bên, nhóm, trạng thái; xuất Excel. Tin nhắn mời mẫu sửa được.
-- **Phản hồi:** bật/tắt form xác nhận tham dự và sổ lưu bút, đặt hạn xác nhận; xem số người sẽ đến theo từng bên, ai chưa phản hồi, xuất Excel; ẩn/hiện/xoá lời chúc.
-- **Mừng cưới:** tài khoản ngân hàng nhà trai / nhà gái → thiệp có mục mừng cưới với QR VietQR (app ngân hàng nào cũng quét được) và nút chép số tài khoản. Lưu xong nên quét thử QR trong khung xem trước bằng app ngân hàng thật.
+- **Tổng quan** (mở đầu tiên): đếm ngược tới sự kiện sắp tới, link thiệp chung, số khách · đã gửi · đã mở · sẽ đến · lời chúc, danh sách việc cần chuẩn bị (bấm để tới đúng chỗ), hoạt động gần đây, nút **Tải bản sao lưu** (file JSON chứa toàn bộ dữ liệu, cất ở nơi riêng tư).
+- _Chuẩn bị thiệp_
+  - **Thông tin:** tên, họ tên, thứ bậc, bố mẹ, địa chỉ hai bên; câu trích dẫn.
+  - **Sự kiện:** từng bên nhà trai / nhà gái / chung. Khách chỉ thấy sự kiện của bên mình; sự kiện hiện ở link chung có nhãn riêng.
+  - **Giao diện:** mẫu thiệp, ảnh bìa, album (tối đa 40 ảnh, kéo thả được, xoá có Hoàn tác), nhạc nền (tải file ≤ 8 MB hoặc dán link https). Mục này lưu ngay khi chọn.
+  - **Mừng cưới:** tài khoản ngân hàng nhà trai / nhà gái → thiệp có mục mừng cưới với QR VietQR và nút chép số tài khoản. Lưu xong nên quét thử QR trong khung xem trước bằng app ngân hàng thật.
+- _Gửi & theo dõi_
+  - **Khách mời:** thêm từng khách hoặc nhập Excel (có file mẫu), mỗi khách một link `/m/<mã>`. Chép tin nhắn mời, chép link hoặc **Chia sẻ** (điện thoại: mở bảng chia sẻ để gửi qua Zalo, Messenger) là khách được tự đánh dấu **đã gửi**; bấm trạng thái để đánh dấu tay. Lọc chưa gửi / đã gửi chưa mở / đã mở, theo phản hồi, bên, nhóm; sắp xếp; mã QR; xuất Excel. Tin nhắn mời mẫu sửa được.
+  - **Phản hồi:** bật/tắt form xác nhận tham dự và sổ lưu bút, đặt hạn xác nhận; số người sẽ đến theo từng bên, ai chưa phản hồi; lọc, tìm; ẩn/hiện/xoá lời chúc; xuất Excel cả xác nhận lẫn sổ lưu bút.
+- _Cài đặt_
+  - **Người quản lý:** thêm/bớt email Google được vào trang quản lý (quyền như nhau, tối đa 10 người). Không tự bỏ quyền của mình được, để luôn còn ít nhất một người quản lý.
 
-Nút **Xem thiệp** (Link chung / Như khách nhà trai / Như khách nhà gái) mở thiệp ở tab mới, không tính là lượt mở của khách.
+Đổi tab không mất phần đang sửa; tab có thay đổi chưa lưu hiện chấm đỏ, **Ctrl/⌘+S** để lưu. Menu bên trái có nút mở thiệp như khách (link chung / nhà trai / nhà gái), không tính là lượt mở của khách. Khi mẫu thiệp, ảnh bìa, tên hoặc ngày cưới khác bản deploy gần nhất, trang quản lý nhắc chạy lại `npm run deploy`.
 
 **Link chung và link riêng:** link chung (`/`) chỉ mời chung chung — một sự kiện "Chung hai bên" nếu có, không thì tiệc cưới sớm nhất. Link riêng (`/m/<mã>`) có tên khách và đủ lịch của bên khách (nhà trai hoặc nhà gái, chọn khi tạo khách). Vào `/m` không kèm mã sẽ tự về `/`.
 
 **Khi chạy emulator:** bấm "Đăng nhập với Google", trong cửa sổ của Auth Emulator chọn _Add new account_ và nhập `admin@thiephong.test` (admin thử do `npm run seed` tạo).
 
-**Danh sách admin:** sửa `ADMIN_EMAILS` trong `.env` rồi chạy `npm run seed -- --prod`, hoặc sửa trực tiếp document `site/admins` (field `emails`, dạng mảng) trong Firebase Console → Firestore. App không cho sửa danh sách này.
+**Danh sách admin:** sửa `ADMIN_EMAILS` trong `.env` rồi chạy `npm run seed -- --prod`, hoặc sửa trực tiếp document `site/admins` (field `emails`, dạng mảng) trong Firebase Console → Firestore. Sau khi đã có ít nhất một admin, thêm/bớt người ngay trong `/admin` → **Người quản lý**.
 
 ### Cloudinary (tải ảnh/nhạc)
 
@@ -90,17 +94,18 @@ Nút **Xem thiệp** (Link chung / Như khách nhà trai / Như khách nhà gái
 
 ## Các lệnh
 
-| Lệnh                 | Tác dụng                                                                      |
-| -------------------- | ----------------------------------------------------------------------------- |
-| `npm run dev`        | Next.js dev (đọc Firestore Emulator khi `NEXT_PUBLIC_FIREBASE_EMULATOR=true`) |
-| `npm run emulators`  | Bật Firebase Emulator (Firestore 8085, Auth 9099, Hosting 5005, UI 4000)      |
-| `npm run seed`       | Ghi thiệp mẫu + khách mẫu + admin thử vào emulator                            |
-| `npm run build`      | Xuất site tĩnh vào `out/`                                                     |
-| `npm run preview`    | Build rồi chạy site tĩnh trên Hosting emulator                                |
-| `npm run deploy`     | Build rồi deploy Hosting + Firestore rules lên Firebase                       |
-| `npm test`           | Vitest (logic thuần)                                                          |
-| `npm run test:rules` | Test `firestore.rules` trên Firestore Emulator (tự bật/tắt emulator)          |
-| `npm run check`      | typecheck + lint + format + test + test:rules (chạy trước khi commit)         |
+| Lệnh                 | Tác dụng                                                                                                               |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`        | Next.js dev (đọc Firestore Emulator khi `NEXT_PUBLIC_FIREBASE_EMULATOR=true`)                                          |
+| `npm run emulators`  | Bật Firebase Emulator (Firestore 8085, Auth 9099, Hosting 5005, UI 4000)                                               |
+| `npm run seed`       | Ghi thiệp mẫu + khách mẫu + admin thử vào emulator                                                                     |
+| `npm run build`      | Xuất site tĩnh vào `out/`                                                                                              |
+| `npm run preview`    | Build rồi chạy site tĩnh trên Hosting emulator                                                                         |
+| `npm run deploy`     | Build rồi deploy Hosting + Firestore rules lên Firebase                                                                |
+| `npm test`           | Vitest (logic thuần)                                                                                                   |
+| `npm run test:rules` | Test `firestore.rules` trên Firestore Emulator (tự bật/tắt emulator)                                                   |
+| `npm run check`      | typecheck + lint + format + test + test:rules (chạy trước khi commit)                                                  |
+| `npm run test:e2e`   | Test trên trình duyệt Edge (máy tính + điện thoại): build, bật emulator, chạy Playwright. Tắt emulator đang chạy trước |
 
 ## Deploy lên Firebase (gói Spark, 0đ)
 
@@ -158,7 +163,7 @@ npm run deploy
 Thiệp ở `https://<project-id>.web.app` (và `https://<project-id>.firebaseapp.com`). Lúc build, nội dung thiệp được đọc từ Firestore và nhúng sẵn vào HTML (link chung hiện ngay, ảnh preview khi share có tên cô dâu chú rể + ảnh bìa).
 
 - Sửa nội dung trong `/admin`: khách thấy ngay, không bắt buộc deploy lại.
-- Sau khi **đổi mẫu thiệp hoặc ảnh bìa**: nên chạy lại `npm run deploy` để HTML dựng sẵn và ảnh preview khớp bản mới.
+- Sau khi **đổi mẫu thiệp, ảnh bìa, tên hoặc ngày cưới**: nên chạy lại `npm run deploy` để HTML dựng sẵn và ảnh preview khớp bản mới (trang quản lý tự nhắc).
 - Sửa code: chạy lại `npm run deploy`.
 
 ### 5. App Check — chống spam (tuỳ chọn)
@@ -176,7 +181,7 @@ RSVP và lời chúc ai cũng gửi được (site không có server). Để ch�
 ```
 src/
   app/                 page.tsx (link chung), m/page.tsx (link khách), admin/page.tsx (quản lý), not-found.tsx (404)
-  components/admin     Trang quản lý: đăng nhập, các form, khung xem trước
+  components/admin     Trang quản lý: đăng nhập, tổng quan, các form, khách mời, phản hồi
   components/invitation  Phần dùng chung của thiệp + InvitationApp (đọc Firestore, chọn template)
   lib/firebase/        Khởi tạo Firebase; public-data (Firestore Lite cho khách), admin-client (Auth + Firestore cho admin)
   lib/validators/      Kiểm tra dữ liệu form (zod)

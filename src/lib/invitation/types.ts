@@ -98,6 +98,8 @@ export interface GuestDoc {
   group?: string
   maxAttendees?: number
   openCount?: number
+  /** Lúc admin gửi link cho khách (chép tin nhắn, chia sẻ hoặc tự đánh dấu) */
+  sentAt?: unknown
 }
 
 /** RSVP (rsvps/{id}): link riêng id = mã khách, link chung id ngẫu nhiên */
