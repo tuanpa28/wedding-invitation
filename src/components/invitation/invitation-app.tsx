@@ -86,10 +86,6 @@ export function InvitationApp({
             ? current
             : { status: 'ready', invitation, guest: guest ?? previewGuest(url) },
         )
-        const couple = `${invitation.groom.shortName} & ${invitation.bride.shortName}`
-        document.title = guest
-          ? `Kính mời ${guest.displayName} — Lễ cưới ${couple}`
-          : `Lễ cưới ${couple}`
         if (guest && !url.searchParams.has('preview')) void recordGuestOpen(guest)
       })
       // Mất mạng mà đã có bản dựng sẵn thì cứ hiện bản đó
@@ -115,11 +111,35 @@ export function InvitationApp({
     return <InvitationMissing reason="no-wedding" />
   }
   const Template = TEMPLATE_COMPONENTS[templateId]
+  const couple = `${invitation.groom.shortName} & ${invitation.bride.shortName}`
+  const realGuest = guest && guest.code !== 'preview' ? guest : null
+  const title = realGuest
+    ? `Kính mời ${realGuest.displayName} — Lễ cưới ${couple}`
+    : `Lễ cưới ${couple}`
   return (
     <Suspense fallback={<InvitationLoading />}>
       <Template {...buildTemplateProps(invitation, guest ?? undefined)} />
+      <DocumentTitle title={title} />
     </Suspense>
   )
+}
+
+/**
+ * Tiêu đề tab theo dữ liệu mới nhất (tên khách, tên cô dâu chú rể).
+ * Next.js có thể gắn lại tiêu đề dựng sẵn lúc build sau khi trang đã chạy (máy chậm thì càng
+ * dễ gặp), nên theo dõi thẻ <title> trong <head> và đặt lại nếu bị ghi đè.
+ */
+function DocumentTitle({ title }: { title: string }) {
+  useEffect(() => {
+    const apply = () => {
+      if (document.title !== title) document.title = title
+    }
+    apply()
+    const observer = new MutationObserver(apply)
+    observer.observe(document.head, { subtree: true, childList: true, characterData: true })
+    return () => observer.disconnect()
+  }, [title])
+  return null
 }
 
 /** Trang quản lý xem trước như khách một bên: /?preview&side=groom|bride */

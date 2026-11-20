@@ -135,12 +135,17 @@ export default function SongHyTemplate({
       </CoverOverlay>
 
       {/* ---------- Đầu thiệp ---------- */}
-      <header className={cn(lacquerBg, 'px-6 pt-16 pb-14 text-center text-(--sh-gold-pale)')}>
-        <div className="mx-auto max-w-md">
+      <header
+        className={cn(
+          lacquerBg,
+          'px-6 pt-16 pb-14 text-center text-(--sh-gold-pale) md:pt-24 md:pb-20',
+        )}
+      >
+        <div className="mx-auto max-w-md md:max-w-2xl">
           <HeroItem delay={0.7} variant="fade">
             <p className="text-xs tracking-[0.4em] text-(--sh-gold)/90 uppercase">Thư mời cưới</p>
           </HeroItem>
-          <h1 className="mt-6 font-(family-name:--font-sh-display) text-[2.75rem] leading-[1.2] text-(--sh-gold)">
+          <h1 className="mt-6 font-(family-name:--font-sh-display) text-[2.75rem] leading-[1.2] text-(--sh-gold) md:text-7xl">
             <AnimatedText text={couple[0].shortName} delay={0.9} className="block" />
             <HeroItem
               delay={1.35}
@@ -155,7 +160,7 @@ export default function SongHyTemplate({
           <HeroItem
             delay={0.8}
             variant="zoom"
-            className="mx-auto mt-10 w-64 rounded-t-full border border-(--sh-gold)/70 p-2"
+            className="mx-auto mt-10 w-64 rounded-t-full border border-(--sh-gold)/70 p-2 md:w-80"
           >
             <ParallaxImage className="aspect-[3/4] rounded-t-full" strength={24} delay={0.8}>
               <Image
@@ -164,7 +169,7 @@ export default function SongHyTemplate({
                 fill
                 loading="eager"
                 fetchPriority="high"
-                sizes="256px"
+                sizes="(min-width: 768px) 320px, 256px"
                 className="object-cover"
               />
             </ParallaxImage>
@@ -234,13 +239,13 @@ export default function SongHyTemplate({
 
       {/* ---------- Đếm ngược ---------- */}
       <section className={cn(lacquerBg, 'px-6 py-14 text-center text-(--sh-gold-pale)')}>
-        <Reveal variant="zoom" className="mx-auto max-w-md">
+        <Reveal variant="zoom" className="mx-auto max-w-md md:max-w-2xl">
           <p className="text-xs tracking-[0.35em] text-(--sh-gold) uppercase">Còn lại</p>
           <Countdown
             target={featured.startAt}
             className="mt-6 gap-2"
-            itemClassName="rounded-sm border border-(--sh-gold)/50 py-3"
-            numberClassName="font-(family-name:--font-sh-display) text-3xl text-(--sh-gold)"
+            itemClassName="rounded-sm border border-(--sh-gold)/50 py-3 md:py-5"
+            numberClassName="font-(family-name:--font-sh-display) text-3xl text-(--sh-gold) md:text-5xl"
             labelClassName="mt-1 text-xs tracking-widest uppercase"
           />
           <p className="mt-6 text-sm italic">tới {featured.title.toLowerCase()}</p>
@@ -248,9 +253,14 @@ export default function SongHyTemplate({
       </section>
 
       {/* ---------- Sự kiện ---------- */}
-      <Paper>
+      <Paper width="wide">
         <Heading>Lễ cưới</Heading>
-        <div className="mt-10 space-y-5">
+        <div
+          className={cn(
+            'mt-10 grid gap-5',
+            events.length > 1 ? 'md:grid-cols-2' : 'mx-auto max-w-md',
+          )}
+        >
           {events.map((event) => (
             <EventCard
               key={event.id}
@@ -264,9 +274,10 @@ export default function SongHyTemplate({
       {/* ---------- Album ---------- */}
       {invitation.gallery.length > 0 && (
         <section className={cn(lacquerBg, 'px-4 py-16')}>
-          <div className="mx-auto max-w-md">
+          <div className="mx-auto max-w-md md:max-w-4xl">
             <Heading tone="gold">Khoảnh khắc</Heading>
             <Album
+              wide
               photos={invitation.gallery}
               className="mt-10"
               itemClassName="border border-(--sh-gold)/40 p-1"
@@ -294,7 +305,7 @@ export default function SongHyTemplate({
       )}
 
       {hasGiftAccounts(invitation) && (
-        <Paper light>
+        <Paper light width="wide">
           <Heading>Mừng cưới</Heading>
           <Reveal className="mt-8" style={feedback}>
             <GiftSection invitation={invitation} guest={guest} />
@@ -438,17 +449,28 @@ function Heading({ children, tone = 'red' }: { children: ReactNode; tone?: 'red'
   )
 }
 
-function Paper({ children, light = false }: { children: ReactNode; light?: boolean }) {
+function Paper({
+  children,
+  light = false,
+  width = 'normal',
+}: {
+  children: ReactNode
+  light?: boolean
+  /** normal: chữ, form · wide: lưới thẻ (sự kiện, tài khoản) trên máy tính */
+  width?: 'normal' | 'wide'
+}) {
   return (
     <section
       className={cn(
-        'px-6 py-16',
+        'px-6 py-16 md:py-24',
         light ? 'bg-(--sh-paper-light)' : 'bg-(--sh-paper)',
         // Vân giấy dó rất nhẹ
         'bg-[image:radial-gradient(rgba(59,26,18,0.035)_1px,transparent_1px)] bg-size-[6px_6px]',
       )}
     >
-      <div className="mx-auto max-w-md">{children}</div>
+      <div className={cn('mx-auto max-w-md', width === 'wide' ? 'md:max-w-4xl' : 'md:max-w-xl')}>
+        {children}
+      </div>
     </section>
   )
 }

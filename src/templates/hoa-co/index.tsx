@@ -138,7 +138,7 @@ export default function HoaCoTemplate({
         <HeroItem delay={0.9} variant="fade">
           <p className="text-xs tracking-[0.35em] text-(--hc-moss) uppercase">Ngày chung đôi</p>
         </HeroItem>
-        <h1 className="relative mt-5 font-(family-name:--font-hc-script) text-6xl leading-[1.2] text-(--hc-leaf)">
+        <h1 className="relative mt-5 font-(family-name:--font-hc-script) text-6xl leading-[1.2] text-(--hc-leaf) md:text-8xl">
           <AnimatedText mode="write" text={couple[0].shortName} delay={1.1} className="block" />
           <HeroItem delay={1.9} variant="zoom" className="block text-4xl text-(--hc-lilac)">
             &amp;
@@ -149,7 +149,7 @@ export default function HoaCoTemplate({
         <HeroItem
           delay={1.3}
           variant="zoom"
-          className="relative mx-auto mt-10 aspect-[3/4] w-56 overflow-hidden rounded-[50%] border-[6px] border-(--hc-card) shadow-[0_20px_40px_-24px_rgba(74,94,66,0.7)]"
+          className="relative mx-auto mt-10 aspect-[3/4] w-56 overflow-hidden rounded-[50%] border-[6px] border-(--hc-card) shadow-[0_20px_40px_-24px_rgba(74,94,66,0.7)] md:w-72"
         >
           <ParallaxImage className="size-full rounded-[50%]" strength={20} delay={1.3}>
             <Image
@@ -158,7 +158,7 @@ export default function HoaCoTemplate({
               fill
               loading="eager"
               fetchPriority="high"
-              sizes="224px"
+              sizes="(min-width: 768px) 288px, 224px"
               className="object-cover"
             />
           </ParallaxImage>
@@ -182,7 +182,7 @@ export default function HoaCoTemplate({
         )}
       </Reveal>
 
-      <main className="mx-auto max-w-md space-y-8 px-5 pb-16">
+      <main className="mx-auto max-w-md space-y-8 px-5 pb-16 md:max-w-3xl">
         {/* ---------- Lời mời ---------- */}
         <Card>
           <Heading>Thư mời</Heading>
@@ -191,7 +191,7 @@ export default function HoaCoTemplate({
             <span className="font-semibold text-(--hc-leaf)">{inviteeInSentence(guest)}</span> tới
             chung vui trong ngày trọng đại của chúng mình.
           </p>
-          <div className="mt-8 grid grid-cols-2 gap-4 text-sm leading-relaxed">
+          <div className="mt-8 grid gap-4 text-sm leading-relaxed min-[420px]:grid-cols-2">
             {couple.map((person) => (
               <div key={person.fullName} className="rounded-2xl bg-(--hc-bg) px-3 py-4">
                 <p className="text-xs tracking-[0.25em] text-(--hc-moss) uppercase">
@@ -213,7 +213,7 @@ export default function HoaCoTemplate({
           <Heading>Đếm từng ngày</Heading>
           <Countdown
             target={featured.startAt}
-            className="mt-6 gap-2"
+            className="mx-auto mt-6 max-w-md gap-2"
             itemClassName="aspect-square justify-center rounded-full bg-(--hc-blush)/45"
             numberClassName="text-2xl font-semibold text-(--hc-leaf)"
             labelClassName="text-[0.7rem] text-(--hc-ink)/80"
@@ -223,7 +223,7 @@ export default function HoaCoTemplate({
         {/* ---------- Sự kiện ---------- */}
         <section>
           <Heading className="mb-6 pt-4">Lễ cưới</Heading>
-          <div className="space-y-4">
+          <div className={cn('grid gap-4', events.length > 1 && 'md:grid-cols-2')}>
             {events.map((event) => (
               <EventCard key={event.id} event={event} calendarCouple={calendarCouple} />
             ))}
@@ -235,6 +235,7 @@ export default function HoaCoTemplate({
           <section>
             <Heading className="mb-6 pt-4">Khoảnh khắc</Heading>
             <Album
+              wide
               photos={invitation.gallery}
               itemClassName="overflow-hidden rounded-2xl"
               imageClassName="rounded-2xl"
@@ -244,7 +245,7 @@ export default function HoaCoTemplate({
       </main>
 
       {/* ---------- Xác nhận tham dự + sổ lưu bút ---------- */}
-      <div className="mx-auto max-w-md space-y-8 px-5 pb-16" style={feedback}>
+      <div className="mx-auto max-w-md space-y-8 px-5 pb-16 md:max-w-xl" style={feedback}>
         {rsvpState(invitation) !== 'disabled' && (
           <Card>
             <Heading>Xác nhận tham dự</Heading>
@@ -262,7 +263,7 @@ export default function HoaCoTemplate({
       </div>
 
       {hasGiftAccounts(invitation) && (
-        <div className="mx-auto max-w-md px-5 pb-16" style={feedback}>
+        <div className="mx-auto max-w-md px-5 pb-16 md:max-w-3xl" style={feedback}>
           <Card>
             <Heading>Mừng cưới</Heading>
             <div className="mt-6">

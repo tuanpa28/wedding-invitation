@@ -211,7 +211,7 @@ function RsvpFields({
         <span className="text-sm">Bạn sẽ đến chứ?</span>
         <div role="radiogroup" aria-label="Bạn sẽ đến chứ?" className="flex gap-2">
           {choice(true, 'Sẽ đến chung vui')}
-          {choice(false, 'Rất tiếc, không đến được')}
+          {choice(false, 'Không đến được')}
         </div>
         {errors.attending && <span className="text-xs text-(--fb-error)">{errors.attending}</span>}
       </div>

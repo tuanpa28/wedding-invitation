@@ -1,4 +1,4 @@
-import { ArrowDown, MapPin } from 'lucide-react'
+import { ArrowDown } from 'lucide-react'
 import { Cormorant_Garamond, Great_Vibes, Josefin_Sans } from 'next/font/google'
 import type { CSSProperties, ReactNode } from 'react'
 import { Album } from '@/components/invitation/album'
@@ -13,13 +13,7 @@ import { FallingParticles, ParallaxImage } from '@/components/invitation/motion'
 import { Reveal } from '@/components/invitation/reveal'
 import { WeddingImage as Image } from '@/components/invitation/wedding-image'
 import { rsvpState } from '@/lib/feedback'
-import {
-  eventDateParts,
-  inviteeName,
-  mapsUrl,
-  monthGrid,
-  SIDE_LABEL,
-} from '@/lib/invitation/helpers'
+import { eventDateParts, inviteeName, monthGrid, SIDE_LABEL } from '@/lib/invitation/helpers'
 import type { Person, Photo, WeddingEvent } from '@/lib/invitation/types'
 import { cn } from '@/lib/utils'
 import type { TemplateProps } from '../types'
@@ -113,12 +107,13 @@ export default function NgaTemplate({
       <div className="mx-auto max-w-5xl px-3 py-3 sm:px-6 sm:py-8">
         {/* overflow-clip (không phải hidden) để cột trái sticky vẫn hoạt động */}
         <article className="relative overflow-clip rounded-2xl bg-(--ng-card) shadow-[0_24px_60px_-40px_rgba(70,52,35,0.45)]">
-          <Sprig className="absolute top-0 left-0 w-28 sm:w-36" />
-          <Sprig className="absolute top-0 right-0 w-28 -scale-x-100 sm:w-36" />
+          <Sprig className="absolute -top-3 -left-2 w-20 opacity-80 sm:top-0 sm:left-0 sm:w-36 sm:opacity-100" />
+          <Sprig className="absolute -top-3 -right-2 w-20 -scale-x-100 opacity-80 sm:top-0 sm:right-0 sm:w-36 sm:opacity-100" />
 
           <Gate invitation={invitation} guestName={inviteeName(guest)} couple={couple} />
 
-          <div className="grid gap-14 px-5 pb-16 sm:px-8 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:gap-0">
+          {/* Chưa mở thiệp thì nội dung ẩn hẳn: khách phải mở phong bì trước (như hai mẫu còn lại) */}
+          <div className="grid gap-14 px-5 pb-16 group-data-[phase=closed]/inv:hidden sm:px-8 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:gap-0">
             {/* ---------- Cột trái: lời mời, giờ, nơi tổ chức, bản đồ ---------- */}
             {/* Cao hơn màn hình thì cuộn bên trong, để phần dưới của cột vẫn xem được */}
             <aside className="md:sticky md:top-6 md:h-fit md:max-h-[calc(100svh-3rem)] md:[scrollbar-width:thin] md:overflow-y-auto md:overscroll-contain md:border-r md:border-(--ng-line) md:pt-6 md:pr-8">
@@ -268,7 +263,14 @@ export default function NgaTemplate({
             </div>
           </div>
         </article>
-        <p className={cn(capsLabel, 'py-6 text-center text-(--ng-muted)')}>Thiệp Hồng</p>
+        <p
+          className={cn(
+            capsLabel,
+            'py-6 text-center text-(--ng-muted) group-data-[phase=closed]/inv:hidden',
+          )}
+        >
+          Thiệp Hồng
+        </p>
       </div>
 
       <FallingParticles shapes={['petal']} colors={['#f1c9cf', '#ead5cc', '#e6b8c0']} count={12} />
@@ -291,7 +293,7 @@ function Gate({
 }) {
   const initials = `${lastInitial(couple[0].shortName)}${lastInitial(couple[1].shortName)}`
   return (
-    <section className="relative px-5 pt-10 pb-10 text-center sm:pt-12">
+    <section className="relative flex flex-col px-5 pt-10 pb-10 text-center group-data-[phase=closed]/inv:min-h-[calc(100svh-1.5rem)] group-data-[phase=closed]/inv:justify-center sm:pt-12 sm:group-data-[phase=closed]/inv:min-h-[calc(100svh-4rem)]">
       <p
         className={cn(
           capsLabel,
@@ -397,14 +399,6 @@ function MapCard({ event }: { event: WeddingEvent }) {
         referrerPolicy="no-referrer-when-downgrade"
         className="block h-56 w-full border-0 grayscale-[30%]"
       />
-      <a
-        href={mapsUrl(event)}
-        target="_blank"
-        rel="noreferrer"
-        className="absolute bottom-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-(--ng-taupe) px-4 py-2 text-xs font-semibold whitespace-nowrap text-white shadow-md hover:opacity-90"
-      >
-        <MapPin className="size-3.5" aria-hidden /> Xem đường đi trên Google Maps
-      </a>
     </div>
   )
 }

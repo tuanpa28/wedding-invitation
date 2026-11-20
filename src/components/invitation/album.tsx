@@ -15,12 +15,15 @@ export function Album({
   className,
   itemClassName,
   imageClassName,
-  sizes = '(min-width: 640px) 320px, 50vw',
+  wide = false,
+  sizes = wide ? '(min-width: 768px) 300px, 50vw' : '(min-width: 640px) 320px, 50vw',
 }: {
   photos: Photo[]
   className?: string
   itemClassName?: string
   imageClassName?: string
+  /** Khung rộng (máy tính): 3 cột từ màn hình vừa trở lên, điện thoại vẫn 2 cột */
+  wide?: boolean
   sizes?: string
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -57,38 +60,54 @@ export function Album({
   }, [step])
 
   const current = index === null ? null : photos[index]
-  const columns = splitIntoColumns(photos, 2)
+  const columns2 = splitIntoColumns(photos, 2)
+  const columns3 = wide ? splitIntoColumns(photos, 3) : null
 
   return (
     <>
-      <div className={cn('grid grid-cols-2 items-start gap-2', className)}>
-        {columns.map((column, ci) => (
-          <ul key={ci} className="flex flex-col gap-[inherit]">
-            {column.map(({ photo, index: i }) => (
-              <li key={photo.src} className={itemClassName}>
-                <button
-                  type="button"
-                  onClick={() => openAt(i)}
-                  className="block w-full overflow-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                  aria-label={`Xem ảnh lớn: ${photo.alt}`}
-                >
-                  <Image
-                    src={photo.src}
-                    width={photo.width}
-                    height={photo.height}
-                    alt={photo.alt}
-                    sizes={sizes}
-                    className={cn(
-                      'h-auto w-full transition duration-500 hover:scale-[1.03] motion-reduce:transition-none',
-                      imageClassName,
-                    )}
-                  />
-                </button>
-              </li>
-            ))}
-          </ul>
-        ))}
-      </div>
+      {/* Ảnh xếp so le theo chiều cao (masonry). Bản 3 cột chỉ hiện trên màn hình rộng. */}
+      {[columns2, columns3].map(
+        (columns, layout) =>
+          columns && (
+            <div
+              key={layout}
+              className={cn(
+                'grid items-start gap-2',
+                layout === 0
+                  ? cn('grid-cols-2', wide && 'md:hidden')
+                  : 'hidden grid-cols-3 md:grid',
+                className,
+              )}
+            >
+              {columns.map((column, ci) => (
+                <ul key={ci} className="flex flex-col gap-[inherit]">
+                  {column.map(({ photo, index: i }) => (
+                    <li key={photo.src} className={itemClassName}>
+                      <button
+                        type="button"
+                        onClick={() => openAt(i)}
+                        className="block w-full overflow-hidden focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                        aria-label={`Xem ảnh lớn: ${photo.alt}`}
+                      >
+                        <Image
+                          src={photo.src}
+                          width={photo.width}
+                          height={photo.height}
+                          alt={photo.alt}
+                          sizes={sizes}
+                          className={cn(
+                            'h-auto w-full transition duration-500 hover:scale-[1.03] motion-reduce:transition-none',
+                            imageClassName,
+                          )}
+                        />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          ),
+      )}
 
       <dialog
         ref={dialogRef}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Copy, Gift } from 'lucide-react'
+import { Copy, QrCode } from 'lucide-react'
 import { useState } from 'react'
 import { bankName, transferNote, vietQrImageUrl } from '@/lib/gifts'
 import { SIDE_LABEL } from '@/lib/invitation/helpers'
@@ -59,32 +59,35 @@ function GiftCard({ label, account, note }: { label: string; account: GiftAccoun
       setCopied(what)
       window.setTimeout(() => setCopied(null), 2000)
     } catch {
-      // trình duyệt chặn clipboard: khách vẫn chọn chép tay được
+      // Trình duyệt chặn clipboard (một số app chat mở link bằng trình duyệt riêng)
+      setCopied('fail')
+      window.setTimeout(() => setCopied(null), 3000)
     }
   }
 
   return (
     <div className="rounded-(--fb-radius) border border-(--fb-line) bg-(--fb-card) p-5 text-center">
       <p className="text-xs tracking-[0.2em] text-(--fb-muted) uppercase">{label}</p>
-      <div className="mx-auto mt-4 grid aspect-[0.86] w-full max-w-60 place-items-center overflow-hidden rounded-(--fb-radius) bg-white">
-        {showQr ? (
-          // eslint-disable-next-line @next/next/no-img-element -- ảnh QR từ img.vietqr.io
+      {/* Khung QR chỉ chiếm chỗ khi khách muốn xem (trên điện thoại khung trống dài gần một màn hình) */}
+      {showQr ? (
+        <div className="mx-auto mt-4 grid aspect-[0.86] w-full max-w-60 place-items-center overflow-hidden rounded-(--fb-radius) bg-white">
+          {/* eslint-disable-next-line @next/next/no-img-element -- ảnh QR từ img.vietqr.io */}
           <img
             src={vietQrImageUrl(account, note)}
             alt={`Mã QR chuyển khoản ${bankName(account.bankBin)} ${account.accountNumber}`}
             className="size-full object-contain"
           />
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowQr(true)}
-            className="flex size-full flex-col items-center justify-center gap-2 text-sm text-(--fb-ink)"
-          >
-            <Gift className="size-8 text-(--fb-accent)" aria-hidden />
-            Hiện mã QR
-          </button>
-        )}
-      </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowQr(true)}
+          className="mx-auto mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-(--fb-radius) border border-(--fb-line) bg-white px-5 text-sm text-(--fb-ink) transition hover:border-(--fb-accent)"
+        >
+          <QrCode className="size-4 text-(--fb-accent)" aria-hidden />
+          Hiện mã QR
+        </button>
+      )}
       <p className="mt-4 text-sm text-(--fb-muted)">{bankName(account.bankBin)}</p>
       <button
         type="button"
@@ -97,7 +100,13 @@ function GiftCard({ label, account, note }: { label: string; account: GiftAccoun
       </button>
       <p className="text-sm text-(--fb-ink)">{account.accountName}</p>
       <p className="mt-3 h-5 text-xs text-(--fb-accent)" aria-live="polite">
-        {copied === 'number' ? 'Đã chép số tài khoản' : copied === 'note' ? 'Đã chép nội dung' : ''}
+        {copied === 'number'
+          ? 'Đã chép số tài khoản'
+          : copied === 'note'
+            ? 'Đã chép nội dung'
+            : copied === 'fail'
+              ? 'Không chép được, bạn ghi lại số tài khoản giúp nhé'
+              : ''}
       </p>
       <button
         type="button"

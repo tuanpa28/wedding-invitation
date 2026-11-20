@@ -192,3 +192,13 @@ Mỗi phase test xong và chạy ổn mới sang phase tiếp theo.
   - **Test trình duyệt** `npm run test:e2e`: Playwright trên Edge có sẵn (máy tính + Pixel 7), build site trỏ emulator rồi chạy trong `firebase emulators:exec` (Firestore + Auth + Hosting 5005). 5 kịch bản: Tổng quan (kèm kiểm tra trang không tràn ngang), giữ phần đang sửa + Ctrl+S, luồng gửi thiệp + menu ⋯, khách mở thiệp → admin thấy ngay, người quản lý (thêm → người đó đăng nhập được → bỏ quyền).
   - Test trình duyệt bắt được một lỗi thật: tiêu đề nhóm menu (sr-only, `position:absolute`) thoát khỏi vùng cuộn ngang của menu → trang trên điện thoại rộng 885px và bị thu nhỏ. Sửa bằng `relative` cho danh sách menu.
   - Test: 61 logic, 24 rules, 10 trình duyệt.
+- **Trang của khách — rà soát và tối ưu (20/11/2026):**
+  - Cả 3 mẫu đều phải bấm mở thiệp trước: mẫu Ngà giờ có phong bì chiếm trọn màn hình, nội dung ẩn tới khi mở (trước đây nội dung lộ ra bên dưới).
+  - Máy tính: Song Hỷ và Hoa Cỏ không còn là một cột hẹp — đầu thiệp to hơn, sự kiện 2 cột, album 3 cột (`Album wide`), mừng cưới hai tài khoản cạnh nhau. Điện thoại giữ nguyên bố cục.
+  - Giảm chuyển động: chữ/ảnh hiện ngay (trước đây vẫn mờ dần kèm độ trễ 1–2 giây vì Motion chỉ tắt transform).
+  - Mừng cưới: thay khung QR trống cao gần một màn hình bằng nút "Hiện mã QR"; chép số tài khoản thất bại thì báo cho khách.
+  - Hoa Cỏ: thẻ bố mẹ hai bên xếp dọc trên màn hình hẹp (tên dài bị ngắt dòng). Ngà: cành lá trang trí nhỏ lại, không đè chữ; bỏ nút chồng lên bản đồ (đã có "Chỉ đường"). RSVP: nhãn "Không đến được" ngắn gọn.
+  - Tiêu đề tab "Kính mời <tên khách> — Lễ cưới …" có lúc bị Next.js ghi lại thành tiêu đề dựng sẵn (máy chậm, mẫu tải sau) → đặt tiêu đề sau khi mẫu hiện và theo dõi thẻ `<title>`.
+  - Dữ liệu mẫu có thêm hạn xác nhận và hai tài khoản mừng cưới giả để xem đủ các mục.
+  - **Test trình duyệt cho khách** (`e2e/guest.spec.ts`, ghi thẳng Firestore Emulator như admin vừa lưu): với từng mẫu — mọi thông tin admin nhập hiện đúng (tên, bố mẹ, câu trích dẫn, sự kiện theo bên, link Maps, nhạc, mẫu đã chọn, tiêu đề tab), link chung chỉ một sự kiện, khách nhà gái thấy nhà gái trước + QR chỉ tải khi bấm, RSVP (giới hạn số người, nhớ sau khi tải lại, sửa câu trả lời), sổ lưu bút (gửi hiện ngay, lời chúc ẩn không hiện, báo lỗi khi trống), mở thiệp đủ hiệu ứng, không tràn ngang. Thêm: tắt RSVP/lời chúc, quá hạn, không quà/không nhạc, RSVP link chung bắt chọn bên, đếm lượt mở (xem trước không tính), mã sai, `/m` về `/`.
+  - Test: 61 logic, 24 rules, 58 trình duyệt (admin + khách, máy tính + điện thoại).

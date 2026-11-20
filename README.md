@@ -94,18 +94,18 @@ Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Host
 
 ## Các lệnh
 
-| Lệnh                 | Tác dụng                                                                                                               |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`        | Next.js dev (đọc Firestore Emulator khi `NEXT_PUBLIC_FIREBASE_EMULATOR=true`)                                          |
-| `npm run emulators`  | Bật Firebase Emulator (Firestore 8085, Auth 9099, Hosting 5005, UI 4000)                                               |
-| `npm run seed`       | Ghi thiệp mẫu + khách mẫu + admin thử vào emulator                                                                     |
-| `npm run build`      | Xuất site tĩnh vào `out/`                                                                                              |
-| `npm run preview`    | Build rồi chạy site tĩnh trên Hosting emulator                                                                         |
-| `npm run deploy`     | Build rồi deploy Hosting + Firestore rules lên Firebase                                                                |
-| `npm test`           | Vitest (logic thuần)                                                                                                   |
-| `npm run test:rules` | Test `firestore.rules` trên Firestore Emulator (tự bật/tắt emulator)                                                   |
-| `npm run check`      | typecheck + lint + format + test + test:rules (chạy trước khi commit)                                                  |
-| `npm run test:e2e`   | Test trên trình duyệt Edge (máy tính + điện thoại): build, bật emulator, chạy Playwright. Tắt emulator đang chạy trước |
+| Lệnh                 | Tác dụng                                                                                                                                                              |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`        | Next.js dev (đọc Firestore Emulator khi `NEXT_PUBLIC_FIREBASE_EMULATOR=true`)                                                                                         |
+| `npm run emulators`  | Bật Firebase Emulator (Firestore 8085, Auth 9099, Hosting 5005, UI 4000)                                                                                              |
+| `npm run seed`       | Ghi thiệp mẫu + khách mẫu + admin thử vào emulator                                                                                                                    |
+| `npm run build`      | Xuất site tĩnh vào `out/`                                                                                                                                             |
+| `npm run preview`    | Build rồi chạy site tĩnh trên Hosting emulator                                                                                                                        |
+| `npm run deploy`     | Build rồi deploy Hosting + Firestore rules lên Firebase                                                                                                               |
+| `npm test`           | Vitest (logic thuần)                                                                                                                                                  |
+| `npm run test:rules` | Test `firestore.rules` trên Firestore Emulator (tự bật/tắt emulator)                                                                                                  |
+| `npm run check`      | typecheck + lint + format + test + test:rules (chạy trước khi commit)                                                                                                 |
+| `npm run test:e2e`   | Test trên trình duyệt Edge (máy tính + điện thoại) cho trang quản lý và thiệp của khách: build, bật emulator, chạy Playwright (~4 phút). Tắt emulator đang chạy trước |
 
 ## Deploy lên Firebase (gói Spark, 0đ)
 

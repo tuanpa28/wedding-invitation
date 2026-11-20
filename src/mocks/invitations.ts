@@ -90,6 +90,12 @@ export const demoInvitation: Invitation = {
     photo('g-10.jpg', 960, 640, 'Hai người dưới hoàng hôn màu hồng'),
   ],
   musicUrl: MUSIC_URL,
+  rsvpDeadline: '2027-01-01',
+  // Tài khoản mẫu (không có thật) để xem mục mừng cưới
+  gifts: {
+    groom: { bankBin: '970436', accountNumber: '0011223344', accountName: 'NGUYEN MINH TUAN' },
+    bride: { bankBin: '970418', accountNumber: '5566778899', accountName: 'TRAN NGOC LAN' },
+  },
 }
 
 export const demoGuests: Guest[] = [
