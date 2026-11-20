@@ -93,6 +93,7 @@ function SignIn() {
     } catch (error) {
       const code = (error as { code?: string }).code
       if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
+        console.error('Đăng nhập Google lỗi:', error)
         toast.error('Không đăng nhập được, thử lại sau')
       }
       setPending(false)

@@ -13,7 +13,13 @@ export const FIRESTORE_EMULATOR_PORT = 8085
 
 // Cấu hình web của Firebase là thông tin công khai (bảo mật nằm ở firestore.rules)
 const firebaseOptions: FirebaseOptions = USE_EMULATOR
-  ? { apiKey: 'demo-key', projectId: EMULATOR_PROJECT_ID, appId: 'demo-app' }
+  ? {
+      apiKey: 'demo-key',
+      // Auth bắt buộc có authDomain trước khi mở popup đăng nhập, kể cả khi chạy emulator
+      authDomain: `${EMULATOR_PROJECT_ID}.firebaseapp.com`,
+      projectId: EMULATOR_PROJECT_ID,
+      appId: 'demo-app',
+    }
   : {
       apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
       authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
