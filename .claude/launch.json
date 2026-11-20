@@ -14,6 +14,15 @@
       "port": 4000
     },
     {
+      "name": "thiephong-firebase-jbr",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-e",
+        "const p=require('path');const j='C:\\\\Program Files\\\\JetBrains\\\\IntelliJ IDEA Community Edition 2025.2.5\\\\jbr\\\\bin';const r=require('child_process').spawnSync('npm run emulators',{stdio:'inherit',shell:true,env:{...process.env,PATH:j+p.delimiter+process.env.PATH}});process.exit(r.status??1)"
+      ],
+      "port": 4000
+    },
+    {
       "name": "thiephong-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],

@@ -1,7 +1,7 @@
 'use client'
 
 import { Music, VolumeX } from 'lucide-react'
-import { LazyMotion, MotionConfig, useReducedMotion } from 'motion/react'
+import { LazyMotion, MotionConfig } from 'motion/react'
 import {
   createContext,
   use,
@@ -50,6 +50,19 @@ function readForceMotion() {
 const subscribeNothing = () => () => {}
 
 /**
+ * "Giảm chuyển động" của hệ điều hành. Không dùng useReducedMotion() của Motion: hook đó đọc
+ * matchMedia ngay lần render đầu ở trình duyệt, khác HTML dựng sẵn (server luôn là false)
+ * → lỗi hydration. useSyncExternalStore dùng giá trị server khi hydrate rồi mới đổi.
+ */
+const REDUCED_QUERY = '(prefers-reduced-motion: reduce)'
+function subscribeReducedMotion(onChange: () => void) {
+  const mql = window.matchMedia(REDUCED_QUERY)
+  mql.addEventListener('change', onChange)
+  return () => mql.removeEventListener('change', onChange)
+}
+const readReducedMotion = () => window.matchMedia(REDUCED_QUERY).matches
+
+/**
  * Khung chung của mọi template: giữ trạng thái phong bì + nhạc nền.
  * Gắn `data-phase` lên thẻ gốc để CSS của template chạy hiệu ứng
  * (dùng variant Tailwind `group-data-[phase=opening]/inv:`).
@@ -74,7 +87,7 @@ export function InvitationShell({
   const [playing, setPlaying] = useState(false)
   // Đọc sau khi hydrate: thiệp được dựng sẵn HTML lúc build, lần render đầu phải giống HTML đó
   const forceMotion = useSyncExternalStore(subscribeNothing, readForceMotion, () => false)
-  const systemReduced = useReducedMotion() ?? false
+  const systemReduced = useSyncExternalStore(subscribeReducedMotion, readReducedMotion, () => false)
   const reducedMotion = systemReduced && !forceMotion
   const audioRef = useRef<HTMLAudioElement>(null)
 
