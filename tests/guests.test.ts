@@ -124,9 +124,9 @@ describe('link và tin nhắn', () => {
       inviteMessage('Mời {ten} dự cưới {chu_re} & {co_dau}: {link} — {ten}', {
         name: 'Anh Nam',
         link,
-        groom: 'Minh Tuấn',
-        bride: 'Ngọc Lan',
+        groom: 'Quang Huy',
+        bride: 'Thu Hà',
       }),
-    ).toBe('Mời Anh Nam dự cưới Minh Tuấn & Ngọc Lan: https://thiep.web.app/m/abc234 — Anh Nam')
+    ).toBe('Mời Anh Nam dự cưới Quang Huy & Thu Hà: https://thiep.web.app/m/abc234 — Anh Nam')
   })
 })

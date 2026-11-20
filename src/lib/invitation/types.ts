@@ -4,7 +4,9 @@ export type Side = 'bride' | 'groom'
 /** Sự kiện có thể thuộc một bên hoặc chung cả hai */
 export type EventSide = Side | 'both'
 
-export type EventType = 'an_hoi' | 'vu_quy' | 'thanh_hon' | 'tiec_cuoi' | 'khac'
+/** Chỉ có Lễ Thành Hôn: mỗi bên (nhà trai, nhà gái, chung) tối đa một sự kiện */
+export type EventType = 'thanh_hon'
+export const EVENT_TITLE = 'Lễ Thành Hôn'
 
 export const TEMPLATE_IDS = ['song-hy', 'nga', 'hoa-co'] as const
 export type TemplateId = (typeof TEMPLATE_IDS)[number]
@@ -20,10 +22,8 @@ export interface Photo {
 
 export interface Person {
   fullName: string
-  /** Tên gọi trên thiệp, ví dụ "Minh Tuấn" */
+  /** Tên gọi trên thiệp, ví dụ "Quang Huy" */
   shortName: string
-  /** Thứ bậc trong gia đình, ví dụ "Trưởng nam", "Út nữ" */
-  title?: string
   father?: string
   mother?: string
   /** Địa chỉ nhà bố mẹ, in dưới tên bố mẹ */

@@ -81,9 +81,8 @@ export default function HoaCoTemplate({
   events,
   featured,
   couple,
-  calendarCouple,
 }: TemplateProps) {
-  const date = eventDateParts(featured.startAt)
+  const date = featured && eventDateParts(featured.startAt)
 
   return (
     <InvitationShell
@@ -98,7 +97,7 @@ export default function HoaCoTemplate({
       musicButtonClassName="bg-(--hc-leaf) text-(--hc-card) focus-visible:ring-(--hc-lilac)"
     >
       {/* ---------- Phong bì có con dấu sáp ---------- */}
-      <CoverOverlay className="bg-(--hc-bg) transition-opacity delay-[1000ms] duration-700 group-data-[phase=opening]/inv:opacity-0 motion-reduce:transition-none">
+      <CoverOverlay className="bg-(--hc-bg) transition-opacity delay-[1000ms] duration-700 group-data-[phase=opening]/inv:opacity-0">
         <div className="flex h-full flex-col items-center justify-center gap-10 px-6 text-center">
           <div>
             <p className="text-sm tracking-[0.3em] text-(--hc-moss) uppercase">Gửi tới</p>
@@ -110,7 +109,7 @@ export default function HoaCoTemplate({
           <div className="th-float relative aspect-[3/2] w-[min(80vw,340px)] [perspective:900px] group-data-[phase=opening]/inv:[animation-play-state:paused]">
             <div className="absolute inset-0 rounded-lg bg-(--hc-blush) shadow-[0_18px_40px_-20px_rgba(74,94,66,0.55)]" />
             {/* Tấm thiệp bên trong: trượt lên khỏi phong bì sau khi vạt trên lật */}
-            <div className="absolute inset-x-[9%] top-[10%] h-[82%] rounded-md bg-(--hc-card) shadow-[0_6px_16px_-8px_rgba(54,65,47,0.45)] transition-transform delay-[450ms] duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[phase=opening]/inv:-translate-y-[78%] motion-reduce:transition-none">
+            <div className="absolute inset-x-[9%] top-[10%] h-[82%] rounded-md bg-(--hc-card) shadow-[0_6px_16px_-8px_rgba(54,65,47,0.45)] transition-transform delay-[450ms] duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[phase=opening]/inv:-translate-y-[78%]">
               <p className="pt-3 text-center font-(family-name:--font-hc-script) text-xl text-(--hc-leaf)">
                 Thiệp mời
               </p>
@@ -119,9 +118,10 @@ export default function HoaCoTemplate({
             <div className="absolute inset-0 rounded-lg bg-[#e3b8ae] [clip-path:polygon(0_0,50%_55%,0_100%)]" />
             <div className="absolute inset-0 rounded-lg bg-[#e3b8ae] [clip-path:polygon(100%_0,50%_55%,100%_100%)]" />
             <div className="absolute inset-0 rounded-lg bg-[#e6bfb6] [clip-path:polygon(0_100%,50%_50%,100%_100%)]" />
-            {/* Vạt trên — lật lên khi mở */}
-            <div className="absolute inset-x-0 top-0 z-10 h-[58%] origin-top rounded-t-lg bg-(--hc-blush-deep) transition-transform duration-700 ease-out [clip-path:polygon(0_0,100%_0,50%_100%)] group-data-[phase=opening]/inv:[transform:rotateX(180deg)] motion-reduce:transition-none" />
-            <OpenInvitationButton className="absolute top-[58%] left-1/2 z-20 grid size-[4.5rem] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-(--hc-lilac) text-(--hc-card) shadow-[inset_0_-4px_0_rgba(0,0,0,0.12),0_6px_14px_-6px_rgba(54,65,47,0.6)] transition group-data-[phase=opening]/inv:scale-0 hover:scale-105 focus-visible:ring-2 focus-visible:ring-(--hc-leaf) focus-visible:ring-offset-4 focus-visible:ring-offset-(--hc-bg) focus-visible:outline-none motion-reduce:transition-none">
+            {/* Vạt trên — lật lên khi mở. Lật xong thì xuống dưới tấm thiệp (z-index đổi giữa chừng,
+                lúc vạt đang dựng đứng) để tấm thiệp trượt lên không bị vạt che */}
+            <div className="absolute inset-x-0 top-0 z-10 h-[58%] origin-top rounded-t-lg bg-(--hc-blush-deep) transition-[transform,z-index] duration-700 ease-out [clip-path:polygon(0_0,100%_0,50%_100%)] group-data-[phase=opening]/inv:-z-10 group-data-[phase=opening]/inv:[transform:rotateX(180deg)]" />
+            <OpenInvitationButton className="absolute top-[58%] left-1/2 z-20 grid size-[4.5rem] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-(--hc-lilac) text-(--hc-card) shadow-[inset_0_-4px_0_rgba(0,0,0,0.12),0_6px_14px_-6px_rgba(54,65,47,0.6)] transition group-data-[phase=opening]/inv:scale-0 hover:scale-105 focus-visible:ring-2 focus-visible:ring-(--hc-leaf) focus-visible:ring-offset-4 focus-visible:ring-offset-(--hc-bg) focus-visible:outline-none">
               <Leaf className="size-7" aria-hidden />
               <span className="sr-only">Mở thiệp</span>
             </OpenInvitationButton>
@@ -149,31 +149,39 @@ export default function HoaCoTemplate({
         <HeroItem
           delay={1.3}
           variant="zoom"
-          className="relative mx-auto mt-10 aspect-[3/4] w-56 overflow-hidden rounded-[50%] border-[6px] border-(--hc-card) shadow-[0_20px_40px_-24px_rgba(74,94,66,0.7)] md:w-72"
+          className="relative mx-auto mt-10 aspect-[4/5] w-60 md:w-72"
         >
-          <ParallaxImage className="size-full rounded-[50%]" strength={20} delay={1.3}>
-            <Image
-              src={invitation.cover.src}
-              alt={invitation.cover.alt}
-              fill
-              loading="eager"
-              fetchPriority="high"
-              sizes="(min-width: 768px) 288px, 224px"
-              className="object-cover"
-            />
-          </ParallaxImage>
+          {/* Ảnh oval kiểu cameo, viền chỉ mảnh và cành ô liu nét mảnh (vẽ ra sau khi mở thiệp) */}
+          <div className="absolute inset-[8%] overflow-hidden rounded-[50%] shadow-[0_22px_40px_-26px_rgba(54,65,47,0.8)]">
+            <ParallaxImage className="size-full" strength={16} delay={1.3}>
+              <Image
+                src={invitation.cover.src}
+                alt={invitation.cover.alt}
+                fill
+                loading="eager"
+                fetchPriority="high"
+                sizes="(min-width: 768px) 248px, 206px"
+                className="object-cover"
+              />
+            </ParallaxImage>
+          </div>
+          <CameoFrame className="absolute inset-0 size-full" />
         </HeroItem>
 
-        <div className="mx-auto mt-10 grid max-w-xs grid-cols-3 items-center text-sm">
-          <span>{date.weekday}</span>
-          <span className="border-x border-(--hc-sage)/60 py-2 text-2xl font-semibold text-(--hc-leaf)">
-            {date.day}.{date.month}
-          </span>
-          <span>{date.time}</span>
-        </div>
-        <p className="mt-2 text-sm">năm {date.year}</p>
-        {featured.lunarText && (
-          <p className="mt-1 text-xs text-(--hc-ink)/80">{featured.lunarText}</p>
+        {featured && date && (
+          <>
+            <div className="mx-auto mt-10 grid max-w-xs grid-cols-3 items-center text-sm">
+              <span>{date.weekday}</span>
+              <span className="border-x border-(--hc-sage)/60 py-2 text-2xl font-semibold text-(--hc-leaf)">
+                {date.day}.{date.month}
+              </span>
+              <span>{date.time}</span>
+            </div>
+            <p className="mt-2 text-sm">năm {date.year}</p>
+            {featured.lunarText && (
+              <p className="mt-1 text-xs text-(--hc-ink)/80">{featured.lunarText}</p>
+            )}
+          </>
         )}
         {invitation.quote && (
           <p className="relative mx-auto mt-8 max-w-xs font-(family-name:--font-hc-script) text-2xl leading-snug text-(--hc-leaf)">
@@ -199,8 +207,7 @@ export default function HoaCoTemplate({
                 </p>
                 {person.father && <p className="mt-2">{person.father}</p>}
                 {person.mother && <p>{person.mother}</p>}
-                <p className="mt-3 text-xs text-(--hc-ink)/80">{person.title}</p>
-                <p className="font-(family-name:--font-hc-script) text-2xl leading-snug text-(--hc-leaf)">
+                <p className="mt-3 font-(family-name:--font-hc-script) text-2xl leading-snug text-(--hc-leaf)">
                   {person.fullName}
                 </p>
               </div>
@@ -208,27 +215,31 @@ export default function HoaCoTemplate({
           </div>
         </Card>
 
-        {/* ---------- Đếm ngược ---------- */}
-        <Card>
-          <Heading>Đếm từng ngày</Heading>
-          <Countdown
-            target={featured.startAt}
-            className="mx-auto mt-6 max-w-md gap-2"
-            itemClassName="aspect-square justify-center rounded-full bg-(--hc-blush)/45"
-            numberClassName="text-2xl font-semibold text-(--hc-leaf)"
-            labelClassName="text-[0.7rem] text-(--hc-ink)/80"
-          />
-        </Card>
+        {/* ---------- Đếm ngược + sự kiện (link chung chưa có lễ chung thì không có) ---------- */}
+        {featured && (
+          <>
+            <Card>
+              <Heading>Đếm từng ngày</Heading>
+              <Countdown
+                target={featured.startAt}
+                className="mx-auto mt-6 max-w-md gap-2"
+                itemClassName="aspect-square justify-center rounded-full bg-(--hc-blush)/45"
+                numberClassName="text-2xl font-semibold text-(--hc-leaf)"
+                labelClassName="text-[0.7rem] text-(--hc-ink)/80"
+              />
+            </Card>
 
-        {/* ---------- Sự kiện ---------- */}
-        <section>
-          <Heading className="mb-6 pt-4">Lễ cưới</Heading>
-          <div className={cn('grid gap-4', events.length > 1 && 'md:grid-cols-2')}>
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} calendarCouple={calendarCouple} />
-            ))}
-          </div>
-        </section>
+            {/* ---------- Sự kiện ---------- */}
+            <section>
+              <Heading className="mb-6 pt-4">Lễ cưới</Heading>
+              <div className={cn('grid gap-4', events.length > 1 && 'md:grid-cols-2')}>
+                {events.map((event) => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
 
         {/* ---------- Album ---------- */}
         {invitation.gallery.length > 0 && (
@@ -330,13 +341,7 @@ function Heading({ children, className }: { children: ReactNode; className?: str
   )
 }
 
-function EventCard({
-  event,
-  calendarCouple,
-}: {
-  event: WeddingEvent
-  calendarCouple: TemplateProps['calendarCouple']
-}) {
+function EventCard({ event }: { event: WeddingEvent }) {
   const d = eventDateParts(event.startAt)
   return (
     <Reveal className="rounded-[2rem] bg-(--hc-card) px-6 py-7 text-center shadow-[0_14px_34px_-22px_rgba(74,94,66,0.45)]">
@@ -355,7 +360,7 @@ function EventCard({
       <p className="mt-1 text-sm leading-relaxed text-(--hc-ink)/80">{event.address}</p>
       <EventActions
         event={event}
-        couple={calendarCouple}
+
         className="mt-5 justify-center"
         buttonClassName="rounded-full bg-(--hc-leaf) font-semibold text-(--hc-card) hover:bg-(--hc-ink) focus-visible:ring-(--hc-leaf)"
       />
@@ -363,12 +368,119 @@ function EventCard({
   )
 }
 
+/** Điểm trên elip tâm (100, 125) của khung cameo, góc tính từ đỉnh theo chiều kim đồng hồ */
+const ovalPoint = (deg: number, rx: number, ry: number) => {
+  const rad = (deg * Math.PI) / 180
+  return [100 + rx * Math.sin(rad), 125 - ry * Math.cos(rad)] as const
+}
+
+/** Lá ô liu nét mảnh (chỉ viền + gân giữa), gốc ở (0, 0), mũi lá hướng lên */
+const OLIVE_LEAF = 'M0 0 C 3.2 -3.5, 3.2 -9, 0 -13 C -3.2 -9, -3.2 -3.5, 0 0 Z M0 -1.5 L0 -11'
+
+/** Cành ô liu chạy dọc viền elip từ góc `from` tới `to`, lá xen kẽ hai bên */
+function oliveBranch(from: number, to: number, rx: number, ry: number) {
+  const steps = 24
+  const points = Array.from({ length: steps + 1 }, (_, i) =>
+    ovalPoint(from + ((to - from) * i) / steps, rx, ry),
+  )
+  const stem = `M${points.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L')}`
+  // Lá ở các điểm cách đều (bỏ đoạn gốc), hướng theo chiều mọc của cành, nghiêng ra hai bên
+  const leaves = points.flatMap(([x, y], i) => {
+    if (i < 2 || i % 2 || i === steps) return []
+    const [nx, ny] = points[i + 1]
+    const along = (Math.atan2(nx - x, -(ny - y)) * 180) / Math.PI
+    const tilt = (i / 2) % 2 ? 42 : -42
+    return [{ x, y, rotate: along + tilt, scale: 0.75 + (0.35 * i) / steps }]
+  })
+  return { stem, leaves, tip: points[steps] }
+}
+
+/**
+ * Khung ảnh bìa kiểu cameo: hai đường viền chỉ mảnh quanh ảnh oval, một cành ô liu dài
+ * ôm góc dưới bên trái và một cành ngắn ở góc trên bên phải. Nét tự vẽ ra sau khi mở thiệp.
+ */
+function CameoFrame({ className }: { className?: string }) {
+  const opened =
+    'group-data-[phase=opening]/inv:[stroke-dashoffset:0] group-data-[phase=open]/inv:[stroke-dashoffset:0]'
+  const draw = (delay: string) =>
+    cn(
+      '[stroke-dasharray:1] [stroke-dashoffset:1] transition-[stroke-dashoffset] duration-[1800ms] ease-out',
+      opened,
+      delay,
+    )
+  const appear = cn(
+    'opacity-0 transition-opacity duration-700 delay-[2800ms]',
+    'group-data-[phase=opening]/inv:opacity-100 group-data-[phase=open]/inv:opacity-100',
+  )
+
+  const long = oliveBranch(178, 290, 99, 122)
+  const short = oliveBranch(8, 62, 99, 122)
+
+  return (
+    <svg
+      viewBox="0 0 200 250"
+      aria-hidden
+      className={cn('pointer-events-none overflow-visible', className)}
+    >
+      {/* Viền đôi: chỉ mảnh sát ảnh + viền ngoài nhạt hơn */}
+      <g fill="none" stroke="var(--hc-leaf)">
+        <ellipse
+          cx="100"
+          cy="125"
+          rx="90"
+          ry="112"
+          strokeWidth="0.9"
+          pathLength={1}
+          className={draw('delay-[1400ms]')}
+        />
+        <ellipse
+          cx="100"
+          cy="125"
+          rx="95"
+          ry="118"
+          strokeWidth="0.5"
+          strokeOpacity="0.55"
+          pathLength={1}
+          className={draw('delay-[1600ms]')}
+        />
+      </g>
+      {[long, short].map((branch, b) => (
+        <g
+          key={b}
+          fill="none"
+          stroke="var(--hc-leaf)"
+          strokeWidth="0.9"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d={branch.stem} pathLength={1} className={draw('delay-[1900ms]')} />
+          {branch.leaves.map((leaf, i) => (
+            <path
+              key={i}
+              d={OLIVE_LEAF}
+              pathLength={1}
+              transform={`translate(${leaf.x.toFixed(1)} ${leaf.y.toFixed(1)}) rotate(${leaf.rotate.toFixed(1)}) scale(${leaf.scale.toFixed(2)})`}
+              className={cn(draw('delay-[2200ms]'), 'fill-(--hc-sage)/15')}
+            />
+          ))}
+        </g>
+      ))}
+      {/* Vài quả ô liu nhỏ màu trầm ở đầu cành */}
+      <g className={appear} fill="var(--hc-moss)">
+        <circle cx={long.tip[0] + 3} cy={long.tip[1] - 2} r="1.7" />
+        <circle cx={long.tip[0] - 1} cy={long.tip[1] - 5} r="1.3" />
+        <circle cx={short.tip[0] + 2} cy={short.tip[1] + 3} r="1.5" />
+      </g>
+    </svg>
+  )
+}
+
 /** Cành hoa dại: nét thân/lá tự vẽ ra khi phần tử cha (group/grow) có data-shown */
 function Sprig({ className }: { className?: string }) {
   const draw =
-    '[stroke-dasharray:1] [stroke-dashoffset:1] transition-[stroke-dashoffset] duration-[1800ms] ease-out group-data-shown/grow:[stroke-dashoffset:0] motion-reduce:[stroke-dashoffset:0] motion-reduce:transition-none'
+    '[stroke-dasharray:1] [stroke-dashoffset:1] transition-[stroke-dashoffset] duration-[1800ms] ease-out group-data-shown/grow:[stroke-dashoffset:0]'
   const bloom =
-    'origin-center scale-0 opacity-0 transition duration-700 [transform-box:fill-box] group-data-shown/grow:scale-100 group-data-shown/grow:opacity-100 motion-reduce:scale-100 motion-reduce:opacity-100 motion-reduce:transition-none'
+    'origin-center scale-0 opacity-0 transition duration-700 [transform-box:fill-box] group-data-shown/grow:scale-100 group-data-shown/grow:opacity-100'
 
   return (
     <svg

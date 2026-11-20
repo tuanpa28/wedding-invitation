@@ -1,4 +1,4 @@
-/** Bỏ dấu tiếng Việt và ký tự lạ: "Ngọc Lan" → "ngoc-lan" */
+/** Bỏ dấu tiếng Việt và ký tự lạ: "Thu Hà" → "thu-ha" */
 export function slugify(text: string) {
   return text
     .normalize('NFD')
@@ -10,7 +10,7 @@ export function slugify(text: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-/** Gợi ý đường dẫn từ tên gọi: "Minh Tuấn" + "Ngọc Lan" → "tuan-lan" (tên chính là từ cuối) */
+/** Gợi ý đường dẫn từ tên gọi: "Quang Huy" + "Thu Hà" → "huy-ha" (tên chính là từ cuối) */
 export function suggestSlug(groomName: string, brideName: string) {
   const lastWord = (name: string) => slugify(name).split('-').filter(Boolean).at(-1) ?? ''
   return [lastWord(groomName), lastWord(brideName)].filter(Boolean).join('-')

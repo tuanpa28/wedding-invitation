@@ -12,7 +12,8 @@ export const DEFAULT_COVER: Photo = {
 export const LIMITS = {
   weddingsPerUser: 3,
   membersPerWedding: 4,
-  events: 12,
+  /** Nhà trai, nhà gái, chung hai bên: mỗi bên một sự kiện */
+  events: 3,
   photos: 40,
   musicBytes: 8 * 1024 * 1024,
   imageBytes: 10 * 1024 * 1024,

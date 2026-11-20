@@ -18,6 +18,7 @@ import type { Person, Photo, WeddingEvent } from '@/lib/invitation/types'
 import { cn } from '@/lib/utils'
 import type { TemplateProps } from '../types'
 import { GiftBox } from './gift-box'
+import { StickyColumn } from './sticky-column'
 
 // Ngà — trang nhã: nền ngà, thẻ trắng, cành lá mảnh ở góc, nâu taupe.
 // Mở thiệp: con dấu sáp vàng tan đi, vạt phong bì lật lên, ảnh cưới trượt ra.
@@ -74,15 +75,7 @@ const feedback = feedbackTheme({
 
 const capsLabel = 'font-(family-name:--font-ng-caps) text-[0.7rem] tracking-[0.28em] uppercase'
 
-export default function NgaTemplate({
-  invitation,
-  guest,
-  events,
-  featured,
-  couple,
-  calendarCouple,
-}: TemplateProps) {
-  const others = events.filter((e) => e.id !== featured.id)
+export default function NgaTemplate({ invitation, guest, featured, couple }: TemplateProps) {
   const photos = invitation.gallery
   const bigPhoto = photos[0] ?? invitation.cover
   const filmPhotos = photos.slice(1, 3)
@@ -115,23 +108,28 @@ export default function NgaTemplate({
           {/* Chưa mở thiệp thì nội dung ẩn hẳn: khách phải mở phong bì trước (như hai mẫu còn lại) */}
           <div className="grid gap-14 px-5 pb-16 group-data-[phase=closed]/inv:hidden sm:px-8 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:gap-0">
             {/* ---------- Cột trái: lời mời, giờ, nơi tổ chức, bản đồ ---------- */}
-            {/* Cao hơn màn hình thì cuộn bên trong, để phần dưới của cột vẫn xem được */}
-            <aside className="md:sticky md:top-6 md:h-fit md:max-h-[calc(100svh-3rem)] md:[scrollbar-width:thin] md:overflow-y-auto md:overscroll-contain md:border-r md:border-(--ng-line) md:pt-6 md:pr-8">
+            {/* Đứng yên khi cuộn; cao hơn màn hình thì cuộn theo trang tới hết rồi mới đứng yên */}
+            <StickyColumn className="md:sticky md:h-fit md:border-r md:border-(--ng-line) md:pt-6 md:pr-8">
               <Reveal className="text-center">
                 <p className={cn(capsLabel, 'text-(--ng-muted)')}>Trân trọng kính mời</p>
                 <p className="mt-3 text-2xl font-medium uppercase">{inviteeName(guest)}</p>
                 <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-(--ng-muted) uppercase">
-                  Đến dự buổi tiệc chung vui cùng gia đình chúng tôi vào lúc
+                  Đến dự buổi tiệc chung vui cùng gia đình chúng tôi
+                  {featured && ' vào lúc'}
                 </p>
-                <FeaturedEvent event={featured} />
-                <EventActions
-                  event={featured}
-                  couple={calendarCouple}
-                  className="mt-6 justify-center"
-                  buttonClassName="rounded-full bg-(--ng-taupe) px-4 text-white hover:opacity-90 focus-visible:ring-(--ng-taupe)"
-                />
+                {featured && (
+                  <>
+                    <FeaturedEvent event={featured} />
+                    <EventActions
+                      event={featured}
+
+                      className="mt-6 justify-center"
+                      buttonClassName="rounded-full bg-(--ng-taupe) px-4 text-white hover:opacity-90 focus-visible:ring-(--ng-taupe)"
+                    />
+                  </>
+                )}
               </Reveal>
-            </aside>
+            </StickyColumn>
 
             {/* ---------- Cột phải: ảnh, gia đình, dải phim, lịch, quà, RSVP ---------- */}
             <div className="space-y-14 md:pt-6 md:pl-8">
@@ -176,7 +174,7 @@ export default function NgaTemplate({
                 </p>
               </Reveal>
 
-              <FilmStrip photos={filmPhotos} target={featured.startAt} />
+              <FilmStrip photos={filmPhotos} target={featured?.startAt} />
 
               <Reveal variant="zoom" className="relative pl-8">
                 <p
@@ -196,18 +194,7 @@ export default function NgaTemplate({
                 </ParallaxImage>
               </Reveal>
 
-              <HeartCalendar event={featured} />
-
-              {others.length > 0 && (
-                <Reveal>
-                  <SectionTitle>Các nghi lễ khác</SectionTitle>
-                  <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-                    {others.map((e) => (
-                      <OtherEvent key={e.id} event={e} calendarCouple={calendarCouple} />
-                    ))}
-                  </ul>
-                </Reveal>
-              )}
+              {featured && <HeartCalendar event={featured} />}
 
               {albumPhotos.length > 0 && (
                 <section>
@@ -256,9 +243,11 @@ export default function NgaTemplate({
                 <p className="mt-4 text-(--ng-muted)">
                   {couple[0].shortName} &amp; {couple[1].shortName}
                 </p>
-                <p className="text-sm text-(--ng-muted)">
-                  {eventDateParts(featured.startAt).date.replaceAll('.', '/')}
-                </p>
+                {featured && (
+                  <p className="text-sm text-(--ng-muted)">
+                    {eventDateParts(featured.startAt).date.replaceAll('.', '/')}
+                  </p>
+                )}
               </Reveal>
             </div>
           </div>
@@ -321,7 +310,7 @@ function Gate({
         <div className="absolute inset-0 rounded-sm bg-(--ng-envelope-deep) shadow-[0_22px_40px_-24px_rgba(70,52,35,0.7)]" />
 
         {/* Ảnh cưới: trượt lên khỏi phong bì sau khi vạt lật */}
-        <div className="absolute inset-x-[6%] bottom-[6%] z-10 h-[94%] overflow-hidden rounded-[2px] bg-white p-1.5 shadow-[0_8px_24px_-12px_rgba(40,30,20,0.45)] transition-transform delay-[550ms] duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[phase=open]/inv:-translate-y-[72%] group-data-[phase=opening]/inv:-translate-y-[72%] motion-reduce:transition-none">
+        <div className="absolute inset-x-[6%] bottom-[6%] z-10 h-[94%] overflow-hidden rounded-[2px] bg-white p-1.5 shadow-[0_8px_24px_-12px_rgba(40,30,20,0.45)] transition-transform delay-[550ms] duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[phase=open]/inv:-translate-y-[72%] group-data-[phase=opening]/inv:-translate-y-[72%]">
           <div className="relative size-full">
             <Image
               src={invitation.cover.src}
@@ -341,10 +330,10 @@ function Gate({
         <div className="absolute inset-0 z-20 rounded-sm bg-[linear-gradient(0deg,#dccdb6,#e7dccb)] [clip-path:polygon(0_100%,50%_46%,100%_100%)]" />
 
         {/* Vạt trên: lật lên rồi lùi ra sau ảnh */}
-        <div className="absolute inset-x-0 top-0 z-30 h-[56%] origin-top bg-[linear-gradient(180deg,#d9c9b0,#e6dac8)] transition-[transform,z-index] duration-700 ease-out [clip-path:polygon(0_0,100%_0,50%_100%)] group-data-[phase=open]/inv:z-0 group-data-[phase=open]/inv:[transform:rotateX(180deg)] group-data-[phase=opening]/inv:z-0 group-data-[phase=opening]/inv:[transform:rotateX(180deg)] motion-reduce:transition-none" />
+        <div className="absolute inset-x-0 top-0 z-30 h-[56%] origin-top bg-[linear-gradient(180deg,#d9c9b0,#e6dac8)] transition-[transform,z-index] duration-700 ease-out [clip-path:polygon(0_0,100%_0,50%_100%)] group-data-[phase=open]/inv:z-0 group-data-[phase=open]/inv:[transform:rotateX(180deg)] group-data-[phase=opening]/inv:z-0 group-data-[phase=opening]/inv:[transform:rotateX(180deg)]" />
 
         {/* Con dấu sáp vàng */}
-        <OpenInvitationButton className="absolute top-[56%] left-1/2 z-40 grid size-[4.75rem] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#f1d08a,#c48a34_55%,#8c5a1c)] font-(family-name:--font-ng-script) text-3xl text-[#5a3810] shadow-[inset_0_-3px_6px_rgba(0,0,0,0.25),inset_0_3px_6px_rgba(255,240,200,0.45),0_6px_14px_-6px_rgba(60,35,10,0.7)] transition duration-500 group-data-[phase=open]/inv:scale-50 group-data-[phase=open]/inv:opacity-0 group-data-[phase=opening]/inv:scale-50 group-data-[phase=opening]/inv:opacity-0 hover:scale-105 focus-visible:ring-2 focus-visible:ring-(--ng-taupe) focus-visible:ring-offset-4 focus-visible:outline-none motion-reduce:transition-none">
+        <OpenInvitationButton className="absolute top-[56%] left-1/2 z-40 grid size-[4.75rem] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#f1d08a,#c48a34_55%,#8c5a1c)] font-(family-name:--font-ng-script) text-3xl text-[#5a3810] shadow-[inset_0_-3px_6px_rgba(0,0,0,0.25),inset_0_3px_6px_rgba(255,240,200,0.45),0_6px_14px_-6px_rgba(60,35,10,0.7)] transition duration-500 group-data-[phase=open]/inv:scale-50 group-data-[phase=open]/inv:opacity-0 group-data-[phase=opening]/inv:scale-50 group-data-[phase=opening]/inv:opacity-0 hover:scale-105 focus-visible:ring-2 focus-visible:ring-(--ng-taupe) focus-visible:ring-offset-4 focus-visible:outline-none">
           <span aria-hidden className="absolute inset-2 rounded-full border border-[#7a4c16]/40" />
           <span aria-hidden>{initials}</span>
           <span className="sr-only">Mở thiệp</span>
@@ -403,32 +392,6 @@ function MapCard({ event }: { event: WeddingEvent }) {
   )
 }
 
-function OtherEvent({
-  event,
-  calendarCouple,
-}: {
-  event: WeddingEvent
-  calendarCouple: TemplateProps['calendarCouple']
-}) {
-  const d = eventDateParts(event.startAt)
-  return (
-    <li className="rounded-xl border border-(--ng-line) bg-[#faf7f2] px-4 py-4 text-center">
-      <p className="text-lg font-semibold">{event.title}</p>
-      <p className="text-(--ng-taupe)">
-        {d.time} · {d.weekday}, {d.date.replaceAll('.', '/')}
-      </p>
-      <p className="mt-1 text-sm">{event.venue}</p>
-      <p className="text-sm text-(--ng-muted)">{event.address}</p>
-      <EventActions
-        event={event}
-        couple={calendarCouple}
-        className="mt-3 justify-center gap-x-4"
-        buttonClassName="min-h-9 px-0 text-xs font-semibold text-(--ng-taupe) underline-offset-4 hover:underline focus-visible:ring-(--ng-taupe)"
-      />
-    </li>
-  )
-}
-
 /* ------------------------------------------------------------------ */
 /* Ảnh, dải phim, lịch                                                 */
 /* ------------------------------------------------------------------ */
@@ -464,7 +427,7 @@ function Portrait({ person, photo, label }: { person: Person; photo?: Photo; lab
 }
 
 /** Khối đen như cuộn phim: ảnh + đếm ngược */
-function FilmStrip({ photos, target }: { photos: Photo[]; target: string }) {
+function FilmStrip({ photos, target }: { photos: Photo[]; target?: string }) {
   const holes =
     'h-3 bg-[repeating-linear-gradient(90deg,transparent_0_10px,rgba(255,255,255,0.75)_10px_18px,transparent_18px_28px)] bg-size-[28px_8px] bg-center bg-repeat-x'
   return (
@@ -497,12 +460,14 @@ function FilmStrip({ photos, target }: { photos: Photo[]; target: string }) {
           ))}
         </div>
       )}
-      <Countdown
-        target={target}
-        className="mt-6 mb-2"
-        numberClassName="font-(family-name:--font-ng-serif) text-3xl"
-        labelClassName="mt-1 font-(family-name:--font-ng-caps) text-[0.6rem] tracking-[0.25em] text-white/70 uppercase"
-      />
+      {target && (
+        <Countdown
+          target={target}
+          className="mt-6 mb-2"
+          numberClassName="font-(family-name:--font-ng-serif) text-3xl"
+          labelClassName="mt-1 font-(family-name:--font-ng-caps) text-[0.6rem] tracking-[0.25em] text-white/70 uppercase"
+        />
+      )}
       <div aria-hidden className={cn(holes, 'mt-3')} />
     </Reveal>
   )

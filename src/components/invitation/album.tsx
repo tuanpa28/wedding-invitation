@@ -96,7 +96,7 @@ export function Album({
                           alt={photo.alt}
                           sizes={sizes}
                           className={cn(
-                            'h-auto w-full transition duration-500 hover:scale-[1.03] motion-reduce:transition-none',
+                            'h-auto w-full transition duration-500 hover:scale-[1.03]',
                             imageClassName,
                           )}
                         />

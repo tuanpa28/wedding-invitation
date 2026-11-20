@@ -20,8 +20,9 @@ export const TEMPLATE_MARK: Record<TemplateId, string> = {
   'hoa-co': 'Ngày chung đôi',
 }
 
-const event = (e: Partial<WeddingEvent> & Pick<WeddingEvent, 'id' | 'side' | 'title'>) => ({
-  type: 'tiec_cuoi',
+const event = (e: Partial<WeddingEvent> & Pick<WeddingEvent, 'id' | 'side'>) => ({
+  type: 'thanh_hon',
+  title: 'Lễ Thành Hôn',
   startAt: '2030-05-05T11:00:00+07:00',
   venue: 'Nhà hàng Kiểm Thử',
   address: '1 Đường Thử, Hà Nội',
@@ -33,7 +34,6 @@ export const ADMIN_CONTENT = {
   groom: {
     shortName: 'Hoàng Minh',
     fullName: 'Lê Hoàng Minh',
-    title: 'Thứ nam',
     father: 'Ông Lê Văn Cha',
     mother: 'Bà Đỗ Thị Mẹ',
     address: '9 Phố Nhà Trai, Hà Nội',
@@ -41,7 +41,6 @@ export const ADMIN_CONTENT = {
   bride: {
     shortName: 'Thu Trang',
     fullName: 'Phạm Thu Trang',
-    title: 'Trưởng nữ',
     father: 'Ông Phạm Văn Bố',
     mother: 'Bà Vũ Thị Má',
     address: '5 Phố Nhà Gái, Hải Phòng',
@@ -49,26 +48,22 @@ export const ADMIN_CONTENT = {
   quote: 'Câu trích dẫn do admin nhập',
   events: [
     event({
-      id: 'ruoc-dau',
+      id: 'thanh-hon-trai',
       side: 'groom',
-      type: 'thanh_hon',
-      title: 'Lễ Rước Dâu Thử',
       startAt: '2030-05-04T09:00:00+07:00',
       venue: 'Tư gia nhà trai thử',
       mapUrl: 'https://maps.app.goo.gl/nhaTraiThu',
     }),
     event({
-      id: 'vu-quy',
+      id: 'thanh-hon-gai',
       side: 'bride',
-      type: 'vu_quy',
-      title: 'Lễ Vu Quy Thử',
       startAt: '2030-05-04T07:00:00+07:00',
       venue: 'Tư gia nhà gái thử',
     }),
     event({
-      id: 'tiec-chung',
+      id: 'thanh-hon-chung',
       side: 'both',
-      title: 'Tiệc Cưới Chung Thử',
+      venue: 'Nhà hàng chung thử',
       lunarText: 'Tức ngày âm thử',
     }),
   ],

@@ -82,9 +82,8 @@ export default function SongHyTemplate({
   events,
   featured,
   couple,
-  calendarCouple,
 }: TemplateProps) {
-  const date = eventDateParts(featured.startAt)
+  const date = featured && eventDateParts(featured.startAt)
 
   return (
     <InvitationShell
@@ -103,7 +102,7 @@ export default function SongHyTemplate({
         {/* Ánh vàng phía sau cổng, loé lên khi cổng mở */}
         <div
           aria-hidden
-          className="absolute inset-0 bg-[radial-gradient(60%_45%_at_50%_50%,#f7e7b4_0%,#d3b064_35%,var(--sh-lacquer-deep)_75%)] opacity-0 group-data-[phase=opening]/inv:animate-[th-flash_1.7s_ease-out_forwards] motion-reduce:hidden"
+          className="absolute inset-0 bg-[radial-gradient(60%_45%_at_50%_50%,#f7e7b4_0%,#d3b064_35%,var(--sh-lacquer-deep)_75%)] opacity-0 group-data-[phase=opening]/inv:animate-[th-flash_1.7s_ease-out_forwards]"
         />
         <div className="absolute inset-0 flex [perspective:1600px]">
           <Door side="left" />
@@ -114,7 +113,7 @@ export default function SongHyTemplate({
           aria-hidden
           className="th-breathe pointer-events-none absolute top-1/2 left-1/2 z-10 -mt-[5.5rem] -ml-[5.5rem] size-44 rounded-full border border-(--sh-gold-pale)/40 transition-opacity duration-300 group-data-[phase=opening]/inv:opacity-0"
         />
-        <div className="relative z-10 flex h-full flex-col items-center justify-between px-6 py-[12svh] text-center transition-opacity duration-500 group-data-[phase=opening]/inv:opacity-0 motion-reduce:transition-none">
+        <div className="relative z-10 flex h-full flex-col items-center justify-between px-6 py-[12svh] text-center transition-opacity duration-500 group-data-[phase=opening]/inv:opacity-0">
           <div>
             <p className="text-xs tracking-[0.35em] text-(--sh-gold-pale)/80 uppercase">
               Trân trọng kính mời
@@ -157,35 +156,35 @@ export default function SongHyTemplate({
             <AnimatedText text={couple[1].shortName} delay={1.5} className="block" />
           </h1>
 
-          <HeroItem
-            delay={0.8}
-            variant="zoom"
-            className="mx-auto mt-10 w-64 rounded-t-full border border-(--sh-gold)/70 p-2 md:w-80"
-          >
-            <ParallaxImage className="aspect-[3/4] rounded-t-full" strength={24} delay={0.8}>
-              <Image
-                src={invitation.cover.src}
-                alt={invitation.cover.alt}
-                fill
-                loading="eager"
-                fetchPriority="high"
-                sizes="(min-width: 768px) 320px, 256px"
-                className="object-cover"
-              />
-            </ParallaxImage>
+          <HeroItem delay={0.8} variant="zoom" className="mx-auto mt-12 w-60 md:w-72">
+            <CoverFrame>
+              <ParallaxImage className="aspect-[3/4]" strength={24} delay={0.8}>
+                <Image
+                  src={invitation.cover.src}
+                  alt={invitation.cover.alt}
+                  fill
+                  loading="eager"
+                  fetchPriority="high"
+                  sizes="(min-width: 768px) 288px, 240px"
+                  className="object-cover"
+                />
+              </ParallaxImage>
+            </CoverFrame>
           </HeroItem>
 
-          <HeroItem delay={1.9}>
-            <p className="mt-10 font-(family-name:--font-sh-display) text-2xl tracking-[0.2em] text-(--sh-gold)">
-              {date.day} · {date.month} · {date.year}
-            </p>
-            <p className="mt-2 text-base">
-              {date.weekday}, {date.time}
-            </p>
-            {featured.lunarText && (
-              <p className="mt-1 text-sm text-(--sh-gold-pale)/75 italic">{featured.lunarText}</p>
-            )}
-          </HeroItem>
+          {featured && date && (
+            <HeroItem delay={1.9}>
+              <p className="mt-14 font-(family-name:--font-sh-display) text-2xl tracking-[0.2em] text-(--sh-gold)">
+                {date.day} · {date.month} · {date.year}
+              </p>
+              <p className="mt-2 text-base">
+                {date.weekday}, {date.time}
+              </p>
+              {featured.lunarText && (
+                <p className="mt-1 text-sm text-(--sh-gold-pale)/75 italic">{featured.lunarText}</p>
+              )}
+            </HeroItem>
+          )}
           {invitation.quote && (
             <HeroItem delay={2.2}>
               <p className="mx-auto mt-8 max-w-xs text-lg leading-relaxed italic">
@@ -223,12 +222,7 @@ export default function SongHyTemplate({
             {couple.map((person, i) => (
               <div key={person.fullName}>
                 {i === 1 && <Ornament className="mx-auto mb-5 w-24" />}
-                {person.title && (
-                  <p className="text-xs tracking-[0.3em] text-(--sh-ink)/60 uppercase">
-                    {person.title}
-                  </p>
-                )}
-                <p className="mt-1 font-(family-name:--font-sh-display) text-3xl leading-tight text-(--sh-red)">
+                <p className="font-(family-name:--font-sh-display) text-3xl leading-tight text-(--sh-red)">
                   {person.fullName}
                 </p>
               </div>
@@ -237,39 +231,43 @@ export default function SongHyTemplate({
         </Reveal>
       </Paper>
 
-      {/* ---------- Đếm ngược ---------- */}
-      <section className={cn(lacquerBg, 'px-6 py-14 text-center text-(--sh-gold-pale)')}>
-        <Reveal variant="zoom" className="mx-auto max-w-md md:max-w-2xl">
-          <p className="text-xs tracking-[0.35em] text-(--sh-gold) uppercase">Còn lại</p>
-          <Countdown
-            target={featured.startAt}
-            className="mt-6 gap-2"
-            itemClassName="rounded-sm border border-(--sh-gold)/50 py-3 md:py-5"
-            numberClassName="font-(family-name:--font-sh-display) text-3xl text-(--sh-gold) md:text-5xl"
-            labelClassName="mt-1 text-xs tracking-widest uppercase"
-          />
-          <p className="mt-6 text-sm italic">tới {featured.title.toLowerCase()}</p>
-        </Reveal>
-      </section>
+      {/* ---------- Đếm ngược + sự kiện (link chung chưa có lễ chung thì không có) ---------- */}
+      {featured && (
+        <>
+          <section className={cn(lacquerBg, 'px-6 py-14 text-center text-(--sh-gold-pale)')}>
+            <Reveal variant="zoom" className="mx-auto max-w-md md:max-w-2xl">
+              <p className="text-xs tracking-[0.35em] text-(--sh-gold) uppercase">Còn lại</p>
+              <Countdown
+                target={featured.startAt}
+                className="mt-6 gap-2"
+                itemClassName="rounded-sm border border-(--sh-gold)/50 py-3 md:py-5"
+                numberClassName="font-(family-name:--font-sh-display) text-3xl text-(--sh-gold) md:text-5xl"
+                labelClassName="mt-1 text-xs tracking-widest uppercase"
+              />
+              <p className="mt-6 text-sm italic">tới {featured.title.toLowerCase()}</p>
+            </Reveal>
+          </section>
 
-      {/* ---------- Sự kiện ---------- */}
-      <Paper width="wide">
-        <Heading>Lễ cưới</Heading>
-        <div
-          className={cn(
-            'mt-10 grid gap-5',
-            events.length > 1 ? 'md:grid-cols-2' : 'mx-auto max-w-md',
-          )}
-        >
-          {events.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              actions={<EventActions event={event} couple={calendarCouple} {...actionStyle} />}
-            />
-          ))}
-        </div>
-      </Paper>
+          {/* ---------- Sự kiện ---------- */}
+          <Paper width="wide">
+            <Heading>Lễ cưới</Heading>
+            <div
+              className={cn(
+                'mt-10 grid gap-5',
+                events.length > 1 ? 'md:grid-cols-2' : 'mx-auto max-w-md',
+              )}
+            >
+              {events.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  actions={<EventActions event={event} {...actionStyle} />}
+                />
+              ))}
+            </div>
+          </Paper>
+        </>
+      )}
 
       {/* ---------- Album ---------- */}
       {invitation.gallery.length > 0 && (
@@ -352,7 +350,7 @@ function Door({ side }: { side: 'left' | 'right' }) {
       className={cn(
         lacquerBg,
         // Cánh cổng xoay quanh bản lề ở mép ngoài (3D), con dấu tách đôi theo mép giữa
-        'relative h-full w-1/2 overflow-hidden transition-[transform,filter] delay-150 duration-[1500ms] ease-[cubic-bezier(0.7,0,0.2,1)] [backface-visibility:hidden] motion-reduce:transition-none',
+        'relative h-full w-1/2 overflow-hidden transition-[transform,filter] delay-150 duration-[1500ms] ease-[cubic-bezier(0.7,0,0.2,1)] [backface-visibility:hidden]',
         left
           ? 'origin-left group-data-[phase=opening]/inv:[transform:rotateY(-108deg)] group-data-[phase=opening]/inv:brightness-50'
           : 'origin-right group-data-[phase=opening]/inv:[transform:rotateY(108deg)] group-data-[phase=opening]/inv:brightness-50',
@@ -381,6 +379,54 @@ function Door({ side }: { side: 'left' | 'right' }) {
         )}
       />
     </div>
+  )
+}
+
+/**
+ * Khung ảnh bìa kiểu tranh treo: viền vàng đôi, hoa văn hồi văn ở bốn góc,
+ * con dấu 囍 đặt giữa cạnh dưới.
+ */
+function CoverFrame({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative">
+      {/* Viền đôi: viền ngoài mảnh, khoảng sơn mài, viền trong đậm hơn ôm sát ảnh */}
+      <div className="border border-(--sh-gold)/60 bg-(--sh-lacquer-deep)/50 p-2.5 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.65)]">
+        <div className="relative overflow-hidden border-2 border-(--sh-gold)">
+          {children}
+          {/* Viền sáng mảnh bên trong ảnh cho cảm giác lồng khung */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-1.5 border border-(--sh-gold-pale)/45"
+          />
+        </div>
+      </div>
+      <FretCorner className="absolute -top-2 -left-2" />
+      <FretCorner className="absolute -top-2 -right-2 rotate-90" />
+      <FretCorner className="absolute -right-2 -bottom-2 rotate-180" />
+      <FretCorner className="absolute -bottom-2 -left-2 -rotate-90" />
+      <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 rounded-full bg-(--sh-lacquer) p-1">
+        <Seal className="size-12" />
+      </div>
+    </div>
+  )
+}
+
+/** Góc hoa văn hồi văn (chữ L xoắn vào trong) — vẽ cho góc trên bên trái, xoay cho các góc khác */
+function FretCorner({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 36 36"
+      className={cn('size-9 text-(--sh-gold)', className)}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="square"
+      aria-hidden
+    >
+      <path d="M1.5 34.5V1.5h33" strokeWidth="2" />
+      <path d="M7 26V7h19" strokeWidth="1.2" />
+      <path d="M12 21v-9h9v5h-4" strokeWidth="1.2" />
+      <rect x="0" y="0" width="5" height="5" fill="currentColor" stroke="none" />
+    </svg>
   )
 }
 

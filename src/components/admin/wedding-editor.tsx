@@ -2,7 +2,6 @@
 
 import {
   CalendarDays,
-  ExternalLink,
   Gift,
   LayoutDashboard,
   MessageCircleHeart,
@@ -78,14 +77,6 @@ const tabFromHash = () => {
   return isTab(hash) ? hash : 'overview'
 }
 
-// Mở thiệp ở tab mới để xem như khách. ?motion=full: luôn chạy hiệu ứng (kể cả khi máy này tắt
-// hiệu ứng); ?preview: không tính là lượt mở của khách.
-export const PREVIEWS = [
-  { href: '/?preview&motion=full', label: 'Link chung' },
-  { href: '/?preview&motion=full&side=groom', label: 'Khách nhà trai' },
-  { href: '/?preview&motion=full&side=bride', label: 'Khách nhà gái' },
-] as const
-
 type EditorProps = { initial: WeddingDoc | null; built: PrerenderStamp | null }
 
 export function WeddingEditor(props: EditorProps) {
@@ -140,30 +131,18 @@ function Editor({ initial, built }: EditorProps) {
         {/* Màn hình nhỏ: `contents` để menu dính được theo cả trang, không chỉ trong aside */}
         <aside className="max-lg:contents lg:sticky lg:top-20 lg:self-start">
           <div className="lg:mb-6">
-            <p className="font-display text-3xl leading-tight tracking-tight lg:text-2xl">
-              {wedding.groom.shortName}
-              <span className="mx-1.5 text-primary italic">&amp;</span>
-              {wedding.bride.shortName}
+            {/* Mỗi tên không bị ngắt giữa chừng: hẹp quá thì xuống dòng sau dấu & */}
+            <p className="font-display text-3xl leading-tight tracking-tight text-balance lg:text-xl">
+              <span className="whitespace-nowrap">
+                {wedding.groom.shortName}
+                <span className="ml-1.5 text-primary italic">&amp;</span>
+              </span>{' '}
+              <span className="whitespace-nowrap">{wedding.bride.shortName}</span>
             </p>
             <p className="mt-1 text-xs text-muted-foreground">Mẫu {templateName}</p>
           </div>
 
           <Nav current={current.id} dirtyTabs={dirtyTabs} onSelect={goTo} />
-
-          <div className="mt-8 hidden gap-1 lg:grid">
-            <p className="mb-1 px-3 text-xs font-medium text-muted-foreground">Xem thiệp như</p>
-            {PREVIEWS.map((p) => (
-              <a
-                key={p.href}
-                href={p.href}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              >
-                <ExternalLink className="size-3.5" /> {p.label}
-              </a>
-            ))}
-          </div>
         </aside>
 
         <div className="min-w-0 pt-6 lg:pt-0">

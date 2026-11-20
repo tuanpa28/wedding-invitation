@@ -15,36 +15,13 @@ export function isTemplateId(value: unknown): value is TemplateId {
 
 const byStart = (a: WeddingEvent, b: WeddingEvent) => Date.parse(a.startAt) - Date.parse(b.startAt)
 
-/** Sự kiện khách được thấy: khách một bên chỉ thấy sự kiện bên đó + sự kiện chung. */
+/**
+ * Sự kiện khách được thấy (tối đa một): link riêng chỉ thấy lễ của bên mình (nhà trai / nhà gái),
+ * link chung (không có `side`) chỉ thấy lễ chung hai bên. Bên đó chưa có lễ → mảng rỗng.
+ */
 export function eventsForSide(events: WeddingEvent[], side?: Side): WeddingEvent[] {
-  const visible = side ? events.filter((e) => e.side === side || e.side === 'both') : events
-  return [...visible].sort(byStart)
-}
-
-/** Nhóm sự kiện theo bên (dùng cho link chung không có tên khách). Nhà trai trước, nhà gái sau. */
-export function groupEventsBySide(events: WeddingEvent[]) {
-  const order: EventSide[] = ['groom', 'bride', 'both']
-  return order
-    .map((side) => ({
-      side,
-      label: SIDE_LABEL[side],
-      events: events.filter((e) => e.side === side).sort(byStart),
-    }))
-    .filter((group) => group.events.length > 0)
-}
-
-/** Sự kiện chính để đếm ngược và in ngày lớn: ưu tiên lễ của bên khách, sau đó Lễ Thành Hôn. */
-export function featuredEvent(events: WeddingEvent[], side?: Side): WeddingEvent | undefined {
-  const sorted = [...events].sort(byStart)
-  const priority =
-    side === 'bride' ? ['vu_quy', 'tiec_cuoi', 'thanh_hon'] : ['thanh_hon', 'vu_quy', 'tiec_cuoi']
-  for (const type of priority) {
-    const found = sorted.find(
-      (e) => e.type === type && (!side || e.side === side || e.side === 'both'),
-    )
-    if (found) return found
-  }
-  return sorted[0]
+  const wanted: EventSide = side ?? 'both'
+  return events.filter((e) => e.side === wanted).sort(byStart)
 }
 
 /** Thứ tự tên trên thiệp: khách nhà gái thấy tên cô dâu trước, còn lại chú rể trước. */
@@ -150,81 +127,4 @@ export function mapsUrl(event: WeddingEvent) {
   if (event.mapUrl) return event.mapUrl
   const query = encodeURIComponent(`${event.venue}, ${event.address}`)
   return `https://www.google.com/maps/search/?api=1&query=${query}`
-}
-
-/** Sự kiện cưới mặc định kéo dài 3 tiếng (dùng cho lịch) */
-const EVENT_DURATION_MS = 3 * 60 * 60 * 1000
-
-/** 2027-01-09T03:30:00.000Z → 20270109T033000Z */
-function toCalendarUtc(ms: number) {
-  return new Date(ms)
-    .toISOString()
-    .replace(/[-:]/g, '')
-    .replace(/\.\d{3}/, '')
-}
-
-/** Thông tin tối thiểu để tạo sự kiện lịch (truyền được xuống client component) */
-export type CalendarCouple = {
-  slug: string
-  groom: Pick<Person, 'shortName'>
-  bride: Pick<Person, 'shortName'>
-}
-
-function calendarTitle(event: WeddingEvent, invitation: CalendarCouple) {
-  return `${event.title} — ${invitation.groom.shortName} & ${invitation.bride.shortName}`
-}
-
-export function googleCalendarUrl(event: WeddingEvent, invitation: CalendarCouple) {
-  const start = Date.parse(event.startAt)
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: calendarTitle(event, invitation),
-    dates: `${toCalendarUtc(start)}/${toCalendarUtc(start + EVENT_DURATION_MS)}`,
-    location: `${event.venue}, ${event.address}`,
-    details: 'Thiệp mời từ Thiệp Hồng',
-  })
-  return `https://calendar.google.com/calendar/render?${params.toString()}`
-}
-
-/** Escape ký tự đặc biệt theo RFC 5545 */
-function escapeIcs(text: string) {
-  return text
-    .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,')
-    .replace(/\r?\n/g, '\\n')
-}
-
-/** Nội dung file .ics để lưu sự kiện vào lịch (Apple Calendar, Outlook, ...) */
-export function buildIcs(event: WeddingEvent, invitation: CalendarCouple, nowMs: number) {
-  const start = Date.parse(event.startAt)
-  const lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Thiep Hong//Thiep cuoi//VI',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    'BEGIN:VEVENT',
-    `UID:${event.id}@${invitation.slug}.thiephong`,
-    `DTSTAMP:${toCalendarUtc(nowMs)}`,
-    `DTSTART:${toCalendarUtc(start)}`,
-    `DTEND:${toCalendarUtc(start + EVENT_DURATION_MS)}`,
-    `SUMMARY:${escapeIcs(calendarTitle(event, invitation))}`,
-    `LOCATION:${escapeIcs(`${event.venue}, ${event.address}`)}`,
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ]
-  return lines.join('\r\n') + '\r\n'
-}
-
-/**
- * Sự kiện chính cho link chung (không có tên khách): sự kiện chung hai bên sớm nhất,
- * không có thì tiệc cưới sớm nhất, không có nữa thì sự kiện sớm nhất.
- * Link chung chỉ mời chung chung; lịch từng bên (vu quy, thành hôn tại nhà) chỉ có trong link riêng.
- */
-export function mainEvent(events: WeddingEvent[]): WeddingEvent | undefined {
-  const sorted = [...events].sort(byStart)
-  return (
-    sorted.find((e) => e.side === 'both') ?? sorted.find((e) => e.type === 'tiec_cuoi') ?? sorted[0]
-  )
 }

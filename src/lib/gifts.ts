@@ -39,7 +39,7 @@ export function bankName(bin: string) {
   return BANKS.find((b) => b.bin === bin)?.name ?? bin
 }
 
-/** Tên chủ tài khoản theo kiểu ngân hàng: in hoa, không dấu ("NGUYEN MINH TUAN") */
+/** Tên chủ tài khoản theo kiểu ngân hàng: in hoa, không dấu ("NGUYEN QUANG HUY") */
 export function toBankName(name: string) {
   return slugify(name).replace(/-/g, ' ').toUpperCase().trim()
 }
@@ -62,7 +62,7 @@ export type BankAccount = z.infer<typeof bankAccountSchema>
 
 /**
  * Nội dung chuyển khoản gợi ý (không dấu, ngắn gọn để mọi app ngân hàng nhận):
- * "ANH NAM MUNG CUOI TUAN LAN"
+ * "ANH NAM MUNG CUOI HUY HA"
  */
 export function transferNote(guestName: string | undefined, groom: string, bride: string) {
   const lastWord = (n: string) => toBankName(n).split(' ').at(-1) ?? ''

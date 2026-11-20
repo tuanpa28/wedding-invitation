@@ -44,11 +44,11 @@ Chạy chế độ dev:
 npm run dev
 ```
 
-- http://localhost:3000: thiệp, link chung (sự kiện cả hai bên)
+- http://localhost:3000: thiệp, link chung (lễ chung hai bên)
 - http://localhost:3000/m/nam2027: khách nhà trai "Anh Nam"
 - http://localhost:3000/m/cohoa27: khách nhà gái "Cô Hoa và gia đình"
-- Thêm `?t=song-hy`, `?t=nga` hoặc `?t=hoa-co` để xem thử template khác.
-- Máy tắt hiệu ứng (Windows: _Settings → Accessibility → Visual effects → Animation effects_; điện thoại: _Giảm chuyển động_) thì thiệp mở ngay, không có hiệu ứng. Thêm `?motion=full` để luôn xem hiệu ứng (khung xem trước trong `/admin` đã bật sẵn).
+- Thêm `?preview` vào link khách (ví dụ `/m/nam2027?preview`) để xem mà không tính là khách đã mở thiệp. Muốn xem mẫu khác thì đổi mẫu trong `/admin` → **Giao diện**.
+- Thiệp luôn chạy đủ hiệu ứng, kể cả khi máy bật _Giảm chuyển động_ (Windows: _Animation effects_ tắt).
 
 Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Hosting): tắt `npm run emulators`, rồi chạy `npm run preview` (build xong tự bật emulator, thiệp ở http://localhost:5005), sau đó chạy lại `npm run seed`.
 
@@ -59,10 +59,10 @@ Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Host
 
 Đăng nhập Google bằng email nằm trong danh sách admin (`site/admins` trong Firestore). Menu xếp theo thứ tự công việc:
 
-- **Tổng quan** (mở đầu tiên): đếm ngược tới sự kiện sắp tới, link thiệp chung, số khách · đã gửi · đã mở · sẽ đến · lời chúc, danh sách việc cần chuẩn bị (bấm để tới đúng chỗ), hoạt động gần đây, nút **Tải bản sao lưu** (file JSON chứa toàn bộ dữ liệu, cất ở nơi riêng tư).
+- **Tổng quan** (mở đầu tiên): đếm ngược tới sự kiện sắp tới, link thiệp chung, số khách · đã gửi · đã mở · sẽ đến · lời chúc, danh sách việc cần chuẩn bị (bấm để tới đúng chỗ), hoạt động gần đây.
 - _Chuẩn bị thiệp_
-  - **Thông tin:** tên, họ tên, thứ bậc, bố mẹ, địa chỉ hai bên; câu trích dẫn.
-  - **Sự kiện:** từng bên nhà trai / nhà gái / chung. Khách chỉ thấy sự kiện của bên mình; sự kiện hiện ở link chung có nhãn riêng.
+  - **Thông tin:** tên, họ tên, bố mẹ, địa chỉ hai bên; câu trích dẫn.
+  - **Sự kiện:** chỉ có Lễ Thành Hôn, tối đa 3: một của nhà trai, một của nhà gái, một chung hai bên. Khách nhà trai chỉ thấy lễ nhà trai, khách nhà gái chỉ thấy lễ nhà gái, link chung chỉ thấy lễ chung.
   - **Giao diện:** mẫu thiệp, ảnh bìa, album (tối đa 40 ảnh, kéo thả được, xoá có Hoàn tác), nhạc nền (tải file ≤ 8 MB hoặc dán link https). Mục này lưu ngay khi chọn.
   - **Mừng cưới:** tài khoản ngân hàng nhà trai / nhà gái → thiệp có mục mừng cưới với QR VietQR và nút chép số tài khoản. Lưu xong nên quét thử QR trong khung xem trước bằng app ngân hàng thật.
 - _Gửi & theo dõi_
@@ -71,9 +71,9 @@ Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Host
 - _Cài đặt_
   - **Người quản lý:** thêm/bớt email Google được vào trang quản lý (quyền như nhau, tối đa 10 người). Không tự bỏ quyền của mình được, để luôn còn ít nhất một người quản lý.
 
-Đổi tab không mất phần đang sửa; tab có thay đổi chưa lưu hiện chấm đỏ, **Ctrl/⌘+S** để lưu. Menu bên trái có nút mở thiệp như khách (link chung / nhà trai / nhà gái), không tính là lượt mở của khách. Khi mẫu thiệp, ảnh bìa, tên hoặc ngày cưới khác bản deploy gần nhất, trang quản lý nhắc chạy lại `npm run deploy`.
+Đổi tab không mất phần đang sửa; tab có thay đổi chưa lưu hiện chấm đỏ, **Ctrl/⌘+S** để lưu. Khi mẫu thiệp, ảnh bìa, tên hoặc ngày cưới khác bản deploy gần nhất, trang quản lý nhắc chạy lại `npm run deploy`.
 
-**Link chung và link riêng:** link chung (`/`) chỉ mời chung chung — một sự kiện "Chung hai bên" nếu có, không thì tiệc cưới sớm nhất. Link riêng (`/m/<mã>`) có tên khách và đủ lịch của bên khách (nhà trai hoặc nhà gái, chọn khi tạo khách). Vào `/m` không kèm mã sẽ tự về `/`.
+**Link chung và link riêng:** link chung (`/`) chỉ hiện lễ "Chung hai bên"; chưa có lễ chung thì thiệp vẫn mở được nhưng không có ngày giờ, đếm ngược hay lịch. Link riêng (`/m/<mã>`) có tên khách và chỉ hiện lễ của bên khách (nhà trai hoặc nhà gái, chọn khi tạo khách). Vào `/m` không kèm mã sẽ tự về `/`.
 
 **Khi chạy emulator:** bấm "Đăng nhập với Google", trong cửa sổ của Auth Emulator chọn _Add new account_ và nhập `admin@thiephong.test` (admin thử do `npm run seed` tạo).
 
@@ -111,7 +111,7 @@ Muốn xem đúng như khi đã deploy (site tĩnh + rewrite của Firebase Host
 
 ### 1. Tạo project (làm một lần)
 
-1. Vào [console.firebase.google.com](https://console.firebase.google.com/) → **Create a project**, đặt tên (ví dụ `thiep-cuoi-tuan-lan`). Có thể tắt Google Analytics. Project mới mặc định ở gói **Spark** (miễn phí, không cần thẻ).
+1. Vào [console.firebase.google.com](https://console.firebase.google.com/) → **Create a project**, đặt tên (ví dụ `thiep-cuoi-huy-ha`). Có thể tắt Google Analytics. Project mới mặc định ở gói **Spark** (miễn phí, không cần thẻ).
 2. **Build → Firestore Database → Create database**, chọn vùng `asia-southeast1 (Singapore)`, _Start in production mode_.
 3. **Build → Authentication → Get started → Sign-in method → Google → Enable** (chọn email hỗ trợ là email của bạn). Sau khi deploy, vào **Authentication → Settings → Authorized domains** kiểm tra đã có `<project-id>.web.app` (Firebase tự thêm).
 4. **Project settings (bánh răng) → General → Your apps → Web (`</>`)**: đặt tên app, **không** cần tick Firebase Hosting ở bước này. Firebase hiện đoạn `firebaseConfig`.
@@ -165,6 +165,11 @@ Thiệp ở `https://<project-id>.web.app` (và `https://<project-id>.firebaseap
 - Sửa nội dung trong `/admin`: khách thấy ngay, không bắt buộc deploy lại.
 - Sau khi **đổi mẫu thiệp, ảnh bìa, tên hoặc ngày cưới**: nên chạy lại `npm run deploy` để HTML dựng sẵn và ảnh preview khớp bản mới (trang quản lý tự nhắc).
 - Sửa code: chạy lại `npm run deploy`.
+- `npm run deploy` chỉ đưa lên Hosting và Firestore **rules** (Firebase CLI hay báo lỗi 409 "index already exists" khi deploy lại index đã có). Lần đầu deploy, hoặc khi sửa `firestore.indexes.json`, chạy thêm:
+
+```bash
+npx firebase deploy --only firestore:indexes
+```
 
 ### 5. App Check — chống spam (tuỳ chọn)
 

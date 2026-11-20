@@ -12,17 +12,17 @@ describe('form thông tin', () => {
   it('ô trống tuỳ chọn bị bỏ, câu trích dẫn rỗng thành undefined', () => {
     const data = infoSchema.parse({
       groom: {
-        fullName: ' Nguyễn Minh Tuấn ',
-        shortName: 'Minh Tuấn',
+        fullName: ' Nguyễn Quang Huy ',
+        shortName: 'Quang Huy',
         father: '',
         mother: 'Bà Mai',
       },
-      bride: { fullName: 'Trần Ngọc Lan', shortName: 'Ngọc Lan' },
+      bride: { fullName: 'Trần Thu Hà', shortName: 'Thu Hà' },
       quote: '   ',
     })
     expect(toFirestore(data)).toEqual({
-      groom: { fullName: 'Nguyễn Minh Tuấn', shortName: 'Minh Tuấn', mother: 'Bà Mai' },
-      bride: { fullName: 'Trần Ngọc Lan', shortName: 'Ngọc Lan' },
+      groom: { fullName: 'Nguyễn Quang Huy', shortName: 'Quang Huy', mother: 'Bà Mai' },
+      bride: { fullName: 'Trần Thu Hà', shortName: 'Thu Hà' },
     })
   })
 
@@ -46,6 +46,19 @@ describe('sự kiện', () => {
     expect(eventsSchema.safeParse({ events: [] }).success).toBe(false)
     const event = { ...demoInvitation.events[0], startAt: '2027-01-09T10:30' }
     expect(eventsSchema.safeParse({ events: [event] }).success).toBe(false)
+  })
+
+  it('mỗi bên chỉ một sự kiện, tối đa 3, chỉ có Lễ Thành Hôn', () => {
+    const [bride, groom, both] = demoInvitation.events
+    const secondGroom = { ...groom, id: 'thanh-hon-nha-trai-2' }
+    expect(eventsSchema.safeParse({ events: [bride, groom, secondGroom] }).success).toBe(false)
+    expect(eventsSchema.safeParse({ events: [bride, groom, both, secondGroom] }).success).toBe(
+      false,
+    )
+    expect(
+      eventsSchema.safeParse({ events: [{ ...bride, type: 'vu_quy', title: 'Lễ Vu Quy' }] })
+        .success,
+    ).toBe(false)
   })
 })
 

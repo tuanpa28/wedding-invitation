@@ -1,8 +1,8 @@
 'use client'
 
 // Bộ hiệu ứng dùng chung cho 3 template (Motion + Lenis).
-// Mọi hiệu ứng tôn trọng "giảm chuyển động" của hệ điều hành: MotionConfig reducedMotion="user"
-// trong InvitationShell tắt transform (chỉ còn đổi độ mờ), hạt rơi và cuộn mượt bị tắt hẳn.
+// Hiệu ứng luôn chạy, kể cả khi máy bật "giảm chuyển động" (MotionConfig reducedMotion="never"
+// trong InvitationShell).
 import { m, useScroll, useTransform, type HTMLMotionProps, type Variants } from 'motion/react'
 import { useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
@@ -10,13 +10,6 @@ import { useInvitation } from './invitation-shell'
 
 /** Đường cong chuyển động chung: nhanh đầu, chậm cuối (kiểu điện ảnh) */
 export const EASE_OUT = [0.22, 1, 0.36, 1] as const
-
-/**
- * Máy bật "giảm chuyển động": Motion chỉ tắt transform, còn độ mờ / blur / clip-path vẫn chạy
- * kèm độ trễ, nên chữ hiện chậm 1–2 giây. Với người dùng này nội dung phải hiện ngay.
- */
-const INSTANT = { duration: 0, delay: 0 } as const
-const useReduced = () => useInvitation().reducedMotion
 
 /* ------------------------------------------------------------------ */
 /* Cuộn mượt                                                           */
@@ -26,14 +19,21 @@ const useReduced = () => useInvitation().reducedMotion
 export function SmoothScroll({ enabled }: { enabled: boolean }) {
   useEffect(() => {
     if (!enabled) return
-    let lenis: { destroy: () => void } | undefined
+    let lenis: { destroy: () => void; resize: () => void } | undefined
     let cancelled = false
+    // Lenis chỉ tính lại chiều cao trang khi <html> đổi kích thước, mà <html> cao cố định (h-full).
+    // Nội dung dài thêm sau khi mở (hiện mã QR, lời chúc tải về...) thì phải báo cho Lenis,
+    // nếu không trang bị chặn ở đáy cũ và không cuộn tới được phần cuối.
+    const observer = new ResizeObserver(() => lenis?.resize())
     // Chỉ tải Lenis khi khách đã mở thiệp
     void import('lenis').then(({ default: Lenis }) => {
-      if (!cancelled) lenis = new Lenis({ autoRaf: true, lerp: 0.1 })
+      if (cancelled) return
+      lenis = new Lenis({ autoRaf: true, lerp: 0.1 })
+      observer.observe(document.body)
     })
     return () => {
       cancelled = true
+      observer.disconnect()
       lenis?.destroy()
     }
   }, [enabled])
@@ -80,26 +80,23 @@ export function Reveal({
   children: ReactNode
 }) {
   const Tag = m[as] as typeof m.div
-  const reduced = useReduced()
   return (
     <Tag
       className={className}
       style={style}
-      initial={reduced ? 'shown' : 'hidden'}
+      initial="hidden"
       whileInView="shown"
       viewport={{ once: true, amount: 0.2, margin: '0px 0px -8% 0px' }}
       variants={{
         hidden: REVEAL[variant].hidden,
         shown: {
           ...(REVEAL[variant].shown as object),
-          transition: reduced
-            ? INSTANT
-            : {
-                duration: 0.9,
-                ease: EASE_OUT,
-                delay,
-                ...(stagger ? { staggerChildren: stagger, delayChildren: delay + 0.1 } : {}),
-              },
+          transition: {
+            duration: 0.9,
+            ease: EASE_OUT,
+            delay,
+            ...(stagger ? { staggerChildren: stagger, delayChildren: delay + 0.1 } : {}),
+          },
         },
       }}
     >
@@ -121,7 +118,6 @@ export function RevealItem({
   children: ReactNode
 }) {
   const Tag = m[as] as typeof m.div
-  const reduced = useReduced()
   return (
     <Tag
       className={className}
@@ -129,7 +125,7 @@ export function RevealItem({
         hidden: REVEAL[variant].hidden,
         shown: {
           ...(REVEAL[variant].shown as object),
-          transition: reduced ? INSTANT : { duration: 0.8, ease: EASE_OUT },
+          transition: { duration: 0.8, ease: EASE_OUT },
         },
       }}
     >
@@ -161,7 +157,6 @@ export function HeroItem({
   children: ReactNode
 } & Omit<HTMLMotionProps<'div'>, 'children'>) {
   const opened = useOpened()
-  const reduced = useReduced()
   return (
     <m.div
       className={className}
@@ -171,7 +166,7 @@ export function HeroItem({
         hidden: REVEAL[variant].hidden,
         shown: {
           ...(REVEAL[variant].shown as object),
-          transition: reduced ? INSTANT : { duration: 1.1, ease: EASE_OUT, delay },
+          transition: { duration: 1.1, ease: EASE_OUT, delay },
         },
       }}
       {...rest}
@@ -209,7 +204,6 @@ export function AnimatedText({
   charDelay?: number
 }) {
   const opened = useOpened()
-  const reduced = useReduced()
   const chars = useMemo(() => graphemes(text), [text])
 
   if (mode === 'write') {
@@ -218,9 +212,7 @@ export function AnimatedText({
         className={cn('inline-block', className)}
         initial={{ clipPath: 'inset(-20% 100% -20% 0)', opacity: 0 }}
         animate={opened ? { clipPath: 'inset(-20% -5% -20% 0)', opacity: 1 } : undefined}
-        transition={
-          reduced ? INSTANT : { duration: 0.12 * chars.length + 0.4, ease: 'easeInOut', delay }
-        }
+        transition={{ duration: 0.12 * chars.length + 0.4, ease: 'easeInOut', delay }}
       >
         {text}
       </m.span>
@@ -237,9 +229,7 @@ export function AnimatedText({
           className="inline-block whitespace-pre"
           initial={{ opacity: 0, y: '0.45em', filter: 'blur(6px)' }}
           animate={opened ? { opacity: 1, y: 0, filter: 'blur(0px)' } : undefined}
-          transition={
-            reduced ? INSTANT : { duration: 0.8, ease: EASE_OUT, delay: delay + i * charDelay }
-          }
+          transition={{ duration: 0.8, ease: EASE_OUT, delay: delay + i * charDelay }}
         >
           {char}
         </m.span>
@@ -262,7 +252,6 @@ export function MaskLine({
   onOpen?: boolean
 }) {
   const opened = useOpened()
-  const reduced = useReduced()
   const animate = onOpen ? (opened ? { y: '0%' } : undefined) : { y: '0%' }
   return (
     <span className={cn('block overflow-hidden pb-[0.08em]', className)}>
@@ -270,7 +259,7 @@ export function MaskLine({
         className="block"
         initial={{ y: '110%' }}
         animate={animate}
-        transition={reduced ? INSTANT : { duration: 1.1, ease: EASE_OUT, delay }}
+        transition={{ duration: 1.1, ease: EASE_OUT, delay }}
       >
         {children}
       </m.span>
@@ -332,14 +321,13 @@ export function CurtainReveal({
     from === 'bottom'
       ? ['inset(100% 0% 0% 0%)', 'inset(0% 0% 0% 0%)']
       : ['inset(0% 100% 0% 0%)', 'inset(0% 0% 0% 0%)']
-  const reduced = useReduced()
   return (
     <m.div
       className={className}
-      initial={{ clipPath: reduced ? shown : hidden }}
+      initial={{ clipPath: hidden }}
       whileInView={{ clipPath: shown }}
       viewport={{ once: true, amount: 0.3 }}
-      transition={reduced ? INSTANT : { duration: 1.4, ease: EASE_OUT, delay }}
+      transition={{ duration: 1.4, ease: EASE_OUT, delay }}
     >
       {children}
     </m.div>
@@ -385,7 +373,7 @@ const rand = (i: number, salt: number) => {
 
 /**
  * Hạt rơi nhẹ phủ toàn màn hình sau khi mở thiệp. Chạy bằng CSS animation
- * (keyframes `th-fall` trong globals.css) để nhẹ máy; tắt khi giảm chuyển động.
+ * (keyframes `th-fall` trong globals.css) để nhẹ máy.
  */
 export function FallingParticles({
   shapes,
@@ -396,7 +384,7 @@ export function FallingParticles({
   colors: string[]
   count?: number
 }) {
-  const { phase, reducedMotion: reduced } = useInvitation()
+  const { phase } = useInvitation()
   const particles = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => ({
@@ -412,7 +400,7 @@ export function FallingParticles({
     [count, shapes, colors],
   )
 
-  if (phase !== 'open' || reduced) return null
+  if (phase !== 'open') return null
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-30 overflow-hidden">

@@ -1,22 +1,13 @@
 'use client'
 
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { LIMITS } from '@/lib/invitation/defaults'
-import { mainEvent } from '@/lib/invitation/helpers'
 import { isoToVnLocal, vnLocalToIso } from '@/lib/invitation/slug'
-import type { EventSide, EventType, WeddingEvent } from '@/lib/invitation/types'
-import { EVENT_TYPE_LABEL, eventsSchema } from '@/lib/validators/wedding'
+import { EVENT_TITLE, type EventSide, type WeddingEvent } from '@/lib/invitation/types'
+import { eventsSchema } from '@/lib/validators/wedding'
 import { errorMessage, type EditorFormProps } from './editor-types'
 import { Field, issuesToErrors } from './field'
 import { SaveBar } from './save-bar'
@@ -24,8 +15,6 @@ import { SaveBar } from './save-bar'
 type EventDraft = {
   key: string
   side: EventSide
-  type: EventType
-  title: string
   /** "2027-01-09T10:30" theo giờ Việt Nam */
   local: string
   venue: string
@@ -40,32 +29,39 @@ const SIDE_OPTIONS: { value: EventSide; label: string }[] = [
   { value: 'both', label: 'Chung hai bên' },
 ]
 
-const DEFAULT_TYPE: Record<EventSide, EventType> = {
-  groom: 'thanh_hon',
-  bride: 'vu_quy',
-  both: 'tiec_cuoi',
+/** Lễ của mỗi bên hiện ở link nào */
+const SHOWN_ON: Record<EventSide, string> = {
+  groom: 'Hiện ở link khách nhà trai',
+  bride: 'Hiện ở link khách nhà gái',
+  both: 'Hiện ở link chung',
 }
+
+const SIDE_ORDER = SIDE_OPTIONS.map((o) => o.value)
+const bySide = (a: EventDraft, b: EventDraft) =>
+  SIDE_ORDER.indexOf(a.side) - SIDE_ORDER.indexOf(b.side)
 
 const newKey = () => Math.random().toString(36).slice(2)
 
+// Mỗi bên chỉ một Lễ Thành Hôn: dữ liệu cũ có nhiều sự kiện một bên thì giữ sự kiện đầu tiên
 const toDrafts = (events: WeddingEvent[]): EventDraft[] =>
-  events.map((e) => ({
-    key: e.id,
-    side: e.side,
-    type: e.type,
-    title: e.title,
-    local: isoToVnLocal(e.startAt),
-    venue: e.venue,
-    address: e.address,
-    mapUrl: e.mapUrl ?? '',
-    lunarText: e.lunarText ?? '',
-  }))
+  events
+    .filter((e, i) => events.findIndex((x) => x.side === e.side) === i)
+    .map((e) => ({
+      key: e.id,
+      side: e.side,
+      local: isoToVnLocal(e.startAt),
+      venue: e.venue,
+      address: e.address,
+      mapUrl: e.mapUrl ?? '',
+      lunarText: e.lunarText ?? '',
+    }))
+    .sort(bySide)
 
 const toInput = (d: EventDraft) => ({
   id: d.key,
   side: d.side,
-  type: d.type,
-  title: d.title,
+  type: 'thanh_hon' as const,
+  title: EVENT_TITLE,
   startAt: vnLocalToIso(d.local),
   venue: d.venue,
   address: d.address,
@@ -84,30 +80,12 @@ export function EventsForm({ wedding, onSave }: EditorFormProps) {
     setDrafts((list) => list.map((d) => (d.key === key ? { ...d, ...patch } : d)))
 
   function add(side: EventSide) {
-    const type = DEFAULT_TYPE[side]
-    setDrafts((list) => [
-      ...list,
-      {
-        key: newKey(),
-        side,
-        type,
-        title: EVENT_TYPE_LABEL[type],
-        local: '',
-        venue: '',
-        address: '',
-        mapUrl: '',
-        lunarText: '',
-      },
-    ])
-  }
-
-  function move(index: number, delta: number) {
-    setDrafts((list) => {
-      const next = [...list]
-      const [item] = next.splice(index, 1)
-      next.splice(index + delta, 0, item)
-      return next
-    })
+    setDrafts((list) =>
+      [
+        ...list,
+        { key: newKey(), side, local: '', venue: '', address: '', mapUrl: '', lunarText: '' },
+      ].sort(bySide),
+    )
   }
 
   async function onSubmit(event: FormEvent) {
@@ -131,25 +109,19 @@ export function EventsForm({ wedding, onSave }: EditorFormProps) {
     }
   }
 
-  const full = drafts.length >= LIMITS.events
-  // Sự kiện duy nhất hiện ở link chung (cùng quy tắc với trang thiệp)
-  const mainKey = mainEvent(
-    drafts
-      .filter((d) => d.local)
-      .map((d) => ({ ...toInput(d), mapUrl: undefined, lunarText: undefined })),
-  )?.id
+  const missing = SIDE_OPTIONS.filter((o) => !drafts.some((d) => d.side === o.value))
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6" noValidate>
       <p className="text-sm text-muted-foreground">
-        Link riêng của khách nhà trai hiện sự kiện nhà trai và sự kiện chung; khách nhà gái cũng
-        vậy. Link chung chỉ mời chung chung: hiện một sự kiện &quot;Chung hai bên&quot; (nếu có),
-        không thì tiệc cưới sớm nhất. Giờ tính theo giờ Việt Nam.
+        Mỗi bên có tối đa một Lễ Thành Hôn. Khách nhà trai chỉ thấy lễ nhà trai, khách nhà gái chỉ
+        thấy lễ nhà gái. Link chung chỉ hiện lễ chung hai bên; chưa có lễ chung thì link chung vẫn
+        mở được thiệp nhưng không có ngày giờ. Giờ tính theo giờ Việt Nam.
       </p>
 
       {drafts.length === 0 && (
         <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-          Chưa có sự kiện nào. Thêm Lễ Vu Quy, Lễ Thành Hôn hoặc tiệc cưới của từng bên.
+          Chưa có sự kiện nào. Thêm Lễ Thành Hôn của nhà trai, nhà gái hoặc chung hai bên.
         </div>
       )}
 
@@ -165,98 +137,26 @@ export function EventsForm({ wedding, onSave }: EditorFormProps) {
             >
               <div className="mb-4 flex items-center justify-between gap-2">
                 <p className="flex flex-wrap items-center gap-2 font-display text-lg">
-                  {d.title || EVENT_TYPE_LABEL[d.type]}
-                  {d.key === mainKey && (
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 font-sans text-xs font-medium text-primary">
-                      Hiện ở link chung
-                    </span>
-                  )}
+                  {EVENT_TITLE}
+                  <span className="font-sans text-sm text-muted-foreground">
+                    · {SIDE_OPTIONS.find((o) => o.value === d.side)?.label}
+                  </span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 font-sans text-xs font-medium text-primary">
+                    {SHOWN_ON[d.side]}
+                  </span>
                 </p>
-                <div className="flex gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => move(i, -1)}
-                    disabled={i === 0}
-                    title="Lên trên"
-                  >
-                    <ArrowUp />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => move(i, 1)}
-                    disabled={i === drafts.length - 1}
-                    title="Xuống dưới"
-                  >
-                    <ArrowDown />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => setDrafts((list) => list.filter((x) => x.key !== d.key))}
-                    title="Xoá sự kiện"
-                  >
-                    <Trash2 />
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setDrafts((list) => list.filter((x) => x.key !== d.key))}
+                  title="Xoá sự kiện"
+                >
+                  <Trash2 />
+                </Button>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field id={id('side')} label="Bên tổ chức">
-                  <Select
-                    value={d.side}
-                    onValueChange={(side: EventSide) => update(d.key, { side })}
-                  >
-                    <SelectTrigger id={id('side')} className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SIDE_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field id={id('type')} label="Loại lễ">
-                  <Select
-                    value={d.type}
-                    onValueChange={(type: EventType) =>
-                      update(d.key, {
-                        type,
-                        // Tên còn là tên mặc định thì đổi theo loại lễ
-                        title:
-                          d.title === '' || d.title === EVENT_TYPE_LABEL[d.type]
-                            ? EVENT_TYPE_LABEL[type]
-                            : d.title,
-                      })
-                    }
-                  >
-                    <SelectTrigger id={id('type')} className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(EVENT_TYPE_LABEL).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field id={id('title')} label="Tên sự kiện" error={err('title')}>
-                  <Input
-                    id={id('title')}
-                    value={d.title}
-                    onChange={(e) => update(d.key, { title: e.target.value })}
-                    aria-invalid={Boolean(err('title'))}
-                  />
-                </Field>
                 <Field id={id('local')} label="Ngày giờ" error={err('startAt')}>
                   <Input
                     id={id('local')}
@@ -318,19 +218,15 @@ export function EventsForm({ wedding, onSave }: EditorFormProps) {
         })}
       </ol>
 
-      <div className="flex flex-wrap gap-2">
-        {SIDE_OPTIONS.map((o) => (
-          <Button
-            key={o.value}
-            type="button"
-            variant="outline"
-            onClick={() => add(o.value)}
-            disabled={full}
-          >
-            <Plus /> {o.value === 'both' ? 'Sự kiện chung' : `Sự kiện ${o.label.toLowerCase()}`}
-          </Button>
-        ))}
-      </div>
+      {missing.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {missing.map((o) => (
+            <Button key={o.value} type="button" variant="outline" onClick={() => add(o.value)}>
+              <Plus /> {o.value === 'both' ? 'Sự kiện chung' : `Sự kiện ${o.label.toLowerCase()}`}
+            </Button>
+          ))}
+        </div>
+      )}
       {errors.events && <p className="text-sm text-destructive">{errors.events}</p>}
 
       <SaveBar dirty={dirty} pending={pending} />

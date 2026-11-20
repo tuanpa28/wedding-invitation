@@ -25,7 +25,7 @@ import type {
 import { isValidGuestCode } from '@/lib/invitation/validation'
 import { FIRESTORE_EMULATOR_PORT, getFirebaseApp, USE_EMULATOR } from './config'
 
-/** Id cố định dùng trong UID file lịch (.ics) */
+/** Id cố định của thiệp (chỉ có một đám cưới) */
 export const WEDDING_ID = 'thiep-cuoi'
 
 let db: Firestore | undefined

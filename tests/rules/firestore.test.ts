@@ -26,8 +26,8 @@ let env: RulesTestEnvironment
 const ADMIN = 'admin@thiephong.test'
 const WEDDING = {
   templateId: 'song-hy',
-  groom: { fullName: 'Nguyễn Minh Tuấn', shortName: 'Minh Tuấn' },
-  bride: { fullName: 'Trần Ngọc Lan', shortName: 'Ngọc Lan' },
+  groom: { fullName: 'Nguyễn Quang Huy', shortName: 'Quang Huy' },
+  bride: { fullName: 'Trần Thu Hà', shortName: 'Thu Hà' },
   events: [],
 }
 
@@ -69,8 +69,12 @@ describe('site/wedding', () => {
 
   it('dữ liệu sai khung bị chặn kể cả với admin', async () => {
     await assertFails(updateDoc(doc(admin(), 'site/wedding'), { templateId: 'mau-la' }))
+    // Tối đa 3 sự kiện (nhà trai, nhà gái, chung)
+    await assertSucceeds(
+      updateDoc(doc(admin(), 'site/wedding'), { events: Array.from({ length: 3 }, () => ({})) }),
+    )
     await assertFails(
-      updateDoc(doc(admin(), 'site/wedding'), { events: Array.from({ length: 13 }, () => ({})) }),
+      updateDoc(doc(admin(), 'site/wedding'), { events: Array.from({ length: 4 }, () => ({})) }),
     )
     await assertFails(updateDoc(doc(admin(), 'site/wedding'), { groom: 'chuỗi' }))
     await assertFails(deleteDoc(doc(admin(), 'site/wedding')))
@@ -80,7 +84,7 @@ describe('site/wedding', () => {
     const account = {
       bankBin: '970436',
       accountNumber: '0011004455667',
-      accountName: 'NGUYEN MINH TUAN',
+      accountName: 'NGUYEN QUANG HUY',
     }
     await assertSucceeds(updateDoc(doc(admin(), 'site/wedding'), { gifts: { groom: account } }))
     await assertFails(updateDoc(doc(admin(), 'site/wedding'), { gifts: { ban: account } }))

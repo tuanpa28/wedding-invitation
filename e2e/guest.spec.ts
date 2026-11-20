@@ -14,8 +14,7 @@ import {
 import { resetData } from './helpers'
 
 // Trang của khách. Mỗi test dựng dữ liệu như admin vừa lưu rồi mở thiệp như khách thật.
-// Giảm chuyển động để mở thiệp tức thì; riêng một nhóm test chạy đủ hiệu ứng.
-test.use({ reducedMotion: 'reduce' })
+// Thiệp luôn chạy đủ hiệu ứng (không theo cài đặt "giảm chuyển động" của máy).
 
 test.beforeEach(async () => {
   await resetData()
@@ -72,15 +71,15 @@ for (const templateId of TEMPLATES) {
         'Ông Phạm Văn Bố',
         'Bà Vũ Thị Má',
         'Câu trích dẫn do admin nhập',
-        // Khách nhà trai: sự kiện nhà trai + sự kiện chung
-        'Lễ Rước Dâu Thử',
-        'Tiệc Cưới Chung Thử',
+        // Khách nhà trai: chỉ lễ nhà trai
+        'Lễ Thành Hôn',
         'Tư gia nhà trai thử',
       ]) {
         await expect(text).toContainText(value)
       }
-      // Không thấy sự kiện riêng của nhà gái
-      await expect(text).not.toContainText('Lễ Vu Quy Thử')
+      // Không thấy lễ nhà gái, cũng không thấy lễ chung
+      await expect(text).not.toContainText('Tư gia nhà gái thử')
+      await expect(text).not.toContainText('Nhà hàng chung thử')
 
       // Link Google Maps admin dán vào được dùng cho nút "Chỉ đường"
       await expect(
@@ -91,16 +90,32 @@ for (const templateId of TEMPLATES) {
       await expectNoHorizontalOverflow(page)
     })
 
-    test('link chung: chỉ mời chung chung một sự kiện chính', async ({ page }) => {
+    test('link chung: chỉ lễ chung hai bên', async ({ page }) => {
       await useAdminContent(templateId)
       await page.goto('/?preview')
       await openInvitation(page)
       const text = body(page)
-      await expect(text).toContainText('Tiệc Cưới Chung Thử')
-      await expect(text).not.toContainText('Lễ Rước Dâu Thử')
-      await expect(text).not.toContainText('Lễ Vu Quy Thử')
+      await expect(text).toContainText('Nhà hàng chung thử')
+      await expect(text).not.toContainText('Tư gia nhà trai thử')
+      await expect(text).not.toContainText('Tư gia nhà gái thử')
       await expect(text).not.toContainText('Anh Nam')
       await expect(page).toHaveTitle('Lễ cưới Hoàng Minh & Thu Trang')
+    })
+
+    test('link chung khi chưa có lễ chung: vẫn mở thiệp, không có sự kiện nào', async ({
+      page,
+    }) => {
+      await useAdminContent(templateId, {
+        events: ADMIN_CONTENT.events.filter((e) => e.side !== 'both'),
+      })
+      await page.goto('/?preview')
+      await openInvitation(page)
+      const text = body(page)
+      await expect(text).toContainText('Hoàng Minh')
+      await expect(text).not.toContainText('Lễ Thành Hôn')
+      await expect(text).not.toContainText('Tư gia nhà trai thử')
+      await expect(text).not.toContainText('Tư gia nhà gái thử')
+      await expectNoHorizontalOverflow(page)
     })
 
     test('khách nhà gái: tên cô dâu trước, sự kiện nhà gái, tài khoản nhà gái trước', async ({
@@ -110,8 +125,9 @@ for (const templateId of TEMPLATES) {
       await page.goto('/m/cohoa27?preview')
       await openInvitation(page)
       const text = body(page)
-      await expect(text).toContainText('Lễ Vu Quy Thử')
-      await expect(text).not.toContainText('Lễ Rước Dâu Thử')
+      await expect(text).toContainText('Tư gia nhà gái thử')
+      await expect(text).not.toContainText('Tư gia nhà trai thử')
+      await expect(text).not.toContainText('Nhà hàng chung thử')
 
       const giftBox = page.getByRole('button', { name: /Hộp quà cưới/ })
       if (await giftBox.count()) await giftBox.click()
@@ -188,8 +204,8 @@ for (const templateId of TEMPLATES) {
   })
 }
 
-test.describe('Đủ hiệu ứng (không giảm chuyển động)', () => {
-  test.use({ reducedMotion: 'no-preference' })
+test.describe('Máy bật "giảm chuyển động" vẫn chạy hiệu ứng', () => {
+  test.use({ reducedMotion: 'reduce' })
   for (const templateId of TEMPLATES) {
     test(`mẫu ${templateId}: bấm mở phong bì rồi vào thiệp`, async ({ page }) => {
       await useAdminContent(templateId)

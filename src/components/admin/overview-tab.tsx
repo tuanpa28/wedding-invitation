@@ -5,8 +5,6 @@ import {
   CalendarHeart,
   Check,
   Copy,
-  DatabaseBackup,
-  Download,
   ExternalLink,
   Eye,
   HeartHandshake,
@@ -22,7 +20,6 @@ import { eventDateParts } from '@/lib/invitation/helpers'
 import { useSiteOrigin } from '@/lib/use-origin'
 import { cn } from '@/lib/utils'
 import { useAdminData } from './admin-data'
-import { downloadBackup } from './backup'
 import { copyText } from './copy'
 import type { EditorFormProps } from './editor-types'
 import type { TabId } from './wedding-editor'
@@ -120,7 +117,7 @@ export function OverviewTab({ wedding, goTo }: EditorFormProps & { goTo: (tab: T
               <Copy /> Chép
             </Button>
             <Button asChild variant="ghost" size="icon" title="Mở thiệp">
-              <a href="/?preview&motion=full" target="_blank" rel="noreferrer">
+              <a href="/?preview" target="_blank" rel="noreferrer">
                 <ExternalLink />
                 <span className="sr-only">Mở thiệp ở tab mới</span>
               </a>
@@ -255,33 +252,6 @@ export function OverviewTab({ wedding, goTo }: EditorFormProps & { goTo: (tab: T
           )}
         </section>
       </div>
-
-      {/* Sao lưu */}
-      <section className="flex flex-col gap-3 rounded-2xl border border-dashed p-5 sm:flex-row sm:items-center">
-        <DatabaseBackup className="size-6 shrink-0 text-muted-foreground" />
-        <div className="min-w-0 flex-1">
-          <h2 className="font-medium">Sao lưu dữ liệu</h2>
-          <p className="text-sm text-muted-foreground">
-            Tải một file chứa nội dung thiệp, danh sách khách, phản hồi và lời chúc. Nên tải sau
-            ngày cưới và cất ở nơi riêng tư, vì file có danh sách khách và số tài khoản.
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={loading}
-          onClick={() =>
-            downloadBackup({
-              wedding,
-              guests: guests ?? [],
-              rsvps: rsvps ?? [],
-              wishes: wishes ?? [],
-            })
-          }
-        >
-          <Download /> Tải bản sao lưu
-        </Button>
-      </section>
     </div>
   )
 }

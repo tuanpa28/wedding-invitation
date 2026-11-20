@@ -612,7 +612,7 @@ function GuestRow({
               <QrCode /> Mã QR
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <a href={`/m/${guest.code}?preview&motion=full`} target="_blank" rel="noreferrer">
+              <a href={`/m/${guest.code}?preview`} target="_blank" rel="noreferrer">
                 <ExternalLink /> Xem thiệp như khách
               </a>
             </DropdownMenuItem>

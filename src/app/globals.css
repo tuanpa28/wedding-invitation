@@ -4,15 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* motion-reduce: như mặc định, nhưng bỏ qua trong thiệp có data-motion="full" (?motion=full) */
-@custom-variant motion-reduce {
-  @media (prefers-reduced-motion: reduce) {
-    &:not([data-motion='full'] *) {
-      @slot;
-    }
-  }
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -184,15 +175,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .th-particle:not([data-motion='full'] *) {
-    display: none;
-  }
-  .th-breathe:not([data-motion='full'] *),
-  .th-float:not([data-motion='full'] *) {
-    animation: none !important;
-  }
-}
 .th-breathe {
   animation: th-breathe 2.8s ease-in-out infinite;
 }
@@ -243,10 +225,4 @@
 }
 .th-heartbeat {
   animation: th-heartbeat 1.8s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .th-shimmer:not([data-motion='full'] *),
-  .th-heartbeat:not([data-motion='full'] *) {
-    animation: none;
-  }
 }

@@ -7,8 +7,8 @@ const ev = (id: string, startAt: string) =>
   ({
     id,
     side: 'both',
-    type: 'tiec_cuoi',
-    title: id,
+    type: 'thanh_hon',
+    title: 'Lễ Thành Hôn',
     startAt,
     venue: 'v',
     address: 'a',

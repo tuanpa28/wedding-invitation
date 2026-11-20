@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { LIMITS } from '@/lib/invitation/defaults'
-import { TEMPLATE_IDS } from '@/lib/invitation/types'
+import { EVENT_TITLE, TEMPLATE_IDS } from '@/lib/invitation/types'
 
 // Kiểm tra dữ liệu form trang quản lý trước khi ghi vào Firestore (site/wedding).
 // Lưu ý: đây là output đã chuẩn hoá (chuỗi rỗng → bỏ field) — Firestore không nhận `undefined`,
@@ -42,7 +42,6 @@ export const photoSchema = z.object({
 export const personSchema = z.object({
   fullName: requiredText(80, 'Nhập họ tên'),
   shortName: requiredText(40, 'Nhập tên gọi'),
-  title: optionalText(40),
   father: optionalText(80),
   mother: optionalText(80),
   address: optionalText(200),
@@ -57,19 +56,11 @@ export const infoSchema = z.object({
   quote: optionalText(300),
 })
 
-export const EVENT_TYPE_LABEL = {
-  an_hoi: 'Lễ Ăn Hỏi',
-  vu_quy: 'Lễ Vu Quy',
-  thanh_hon: 'Lễ Thành Hôn',
-  tiec_cuoi: 'Tiệc Cưới',
-  khac: 'Khác',
-} as const
-
 export const eventSchema = z.object({
   id: z.string().min(1).max(40),
   side: z.enum(['bride', 'groom', 'both']),
-  type: z.enum(['an_hoi', 'vu_quy', 'thanh_hon', 'tiec_cuoi', 'khac']),
-  title: requiredText(80, 'Nhập tên sự kiện'),
+  type: z.literal('thanh_hon'),
+  title: z.literal(EVENT_TITLE),
   startAt: z.iso.datetime({ offset: true, message: 'Chọn ngày giờ' }),
   venue: requiredText(120, 'Nhập nơi tổ chức'),
   address: requiredText(200, 'Nhập địa chỉ'),
@@ -81,7 +72,11 @@ export const eventsSchema = z.object({
   events: z
     .array(eventSchema)
     .min(1, 'Cần ít nhất một sự kiện')
-    .max(LIMITS.events, `Tối đa ${LIMITS.events} sự kiện`),
+    .max(LIMITS.events, `Tối đa ${LIMITS.events} sự kiện`)
+    .refine(
+      (events) => new Set(events.map((e) => e.side)).size === events.length,
+      'Mỗi bên (nhà trai, nhà gái, chung) chỉ có một sự kiện',
+    ),
 })
 
 export const gallerySchema = z.object({

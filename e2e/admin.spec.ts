@@ -28,12 +28,12 @@ test('Tổng quan: sự kiện sắp tới, số liệu, việc cần chuẩn b�
 test('Không mất phần đang sửa khi đổi tab; Ctrl+S để lưu', async ({ page }) => {
   await openTab(page, 'Thông tin')
   const name = page.getByRole('region', { name: 'Thông tin' }).getByLabel('Tên gọi').first()
-  await name.fill('Minh Tuấn Test')
+  await name.fill('Quang Huy Test')
   await expect(nav(page).getByRole('button', { name: /Thông tin.*chưa lưu/ })).toBeVisible()
 
   await openTab(page, 'Sự kiện')
   await openTab(page, 'Thông tin')
-  await expect(name).toHaveValue('Minh Tuấn Test')
+  await expect(name).toHaveValue('Quang Huy Test')
 
   await name.press('Control+s')
   await expect(page.getByText('Đã lưu thông tin')).toBeVisible()
@@ -43,7 +43,21 @@ test('Không mất phần đang sửa khi đổi tab; Ctrl+S để lưu', async 
   await page.reload()
   await expect(
     page.getByRole('region', { name: 'Thông tin' }).getByLabel('Tên gọi').first(),
-  ).toHaveValue('Minh Tuấn Test')
+  ).toHaveValue('Quang Huy Test')
+})
+
+test('Sự kiện: mỗi bên một Lễ Thành Hôn, tối đa 3', async ({ page }) => {
+  await openTab(page, 'Sự kiện')
+  const events = page.getByRole('region', { name: 'Sự kiện' })
+  // Dữ liệu mẫu đủ 3 bên → không còn nút thêm, không chọn loại lễ hay bên tổ chức
+  await expect(events.getByRole('listitem')).toHaveCount(3)
+  await expect(events.getByRole('button', { name: /^Sự kiện/ })).toHaveCount(0)
+  await expect(events.getByLabel('Loại lễ')).toHaveCount(0)
+
+  // Xoá lễ nhà trai → hiện lại đúng nút thêm lễ nhà trai
+  const groom = events.getByRole('listitem').filter({ hasText: 'Nhà trai' })
+  await groom.getByRole('button', { name: 'Xoá sự kiện' }).click()
+  await expect(events.getByRole('button', { name: /^Sự kiện/ })).toHaveText(['Sự kiện nhà trai'])
 })
 
 test('Gửi thiệp: chép tin nhắn tự đánh dấu đã gửi, menu ⋯, lọc chưa gửi', async ({ page }) => {

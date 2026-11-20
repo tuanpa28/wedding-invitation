@@ -26,8 +26,8 @@ let env: RulesTestEnvironment
 const ADMIN = 'admin@thiephong.test'
 const WEDDING = {
   templateId: 'song-hy',
-  groom: { fullName: 'Nguyễn Minh Tuấn', shortName: 'Minh Tuấn' },
-  bride: { fullName: 'Trần Ngọc Lan', shortName: 'Ngọc Lan' },
+  groom: { fullName: 'Nguyễn Quang Huy', shortName: 'Quang Huy' },
+  bride: { fullName: 'Trần Thu Hà', shortName: 'Thu Hà' },
   events: [],
 }
 

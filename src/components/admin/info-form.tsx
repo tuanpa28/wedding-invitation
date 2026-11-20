@@ -95,11 +95,10 @@ const PERSON_FIELDS: { key: keyof Person; label: string; hint?: string; required
   {
     key: 'shortName',
     label: 'Tên gọi',
-    hint: 'In to trên thiệp, ví dụ "Minh Tuấn"',
+    hint: 'In to trên thiệp, ví dụ "Quang Huy"',
     required: true,
   },
   { key: 'fullName', label: 'Họ tên đầy đủ', required: true },
-  { key: 'title', label: 'Thứ bậc', hint: 'Ví dụ "Trưởng nam", "Út nữ"' },
   { key: 'father', label: 'Tên bố', hint: 'Ví dụ "Ông Nguyễn Văn Hùng"' },
   { key: 'mother', label: 'Tên mẹ', hint: 'Ví dụ "Bà Trần Thị Mai"' },
   { key: 'address', label: 'Địa chỉ nhà', hint: 'In dưới tên bố mẹ' },

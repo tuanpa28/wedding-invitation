@@ -10,7 +10,6 @@ import {
   useMemo,
   useRef,
   useState,
-  useSyncExternalStore,
   type CSSProperties,
   type ReactNode,
 } from 'react'
@@ -31,8 +30,6 @@ type InvitationContextValue = {
   hasMusic: boolean
   playing: boolean
   toggleMusic: () => void
-  /** Có giảm chuyển động không (theo hệ điều hành, trừ khi URL có ?motion=full) */
-  reducedMotion: boolean
 }
 
 const InvitationContext = createContext<InvitationContextValue | null>(null)
@@ -42,25 +39,6 @@ export function useInvitation() {
   if (!ctx) throw new Error('useInvitation phải nằm trong <InvitationShell>')
   return ctx
 }
-
-/** ?motion=full: luôn chạy hiệu ứng kể cả khi máy bật "giảm chuyển động" (xem trước trong trang quản lý) */
-function readForceMotion() {
-  return new URL(window.location.href).searchParams.get('motion') === 'full'
-}
-const subscribeNothing = () => () => {}
-
-/**
- * "Giảm chuyển động" của hệ điều hành. Không dùng useReducedMotion() của Motion: hook đó đọc
- * matchMedia ngay lần render đầu ở trình duyệt, khác HTML dựng sẵn (server luôn là false)
- * → lỗi hydration. useSyncExternalStore dùng giá trị server khi hydrate rồi mới đổi.
- */
-const REDUCED_QUERY = '(prefers-reduced-motion: reduce)'
-function subscribeReducedMotion(onChange: () => void) {
-  const mql = window.matchMedia(REDUCED_QUERY)
-  mql.addEventListener('change', onChange)
-  return () => mql.removeEventListener('change', onChange)
-}
-const readReducedMotion = () => window.matchMedia(REDUCED_QUERY).matches
 
 /**
  * Khung chung của mọi template: giữ trạng thái phong bì + nhạc nền.
@@ -85,10 +63,6 @@ export function InvitationShell({
 }) {
   const [phase, setPhase] = useState<InvitationPhase>('closed')
   const [playing, setPlaying] = useState(false)
-  // Đọc sau khi hydrate: thiệp được dựng sẵn HTML lúc build, lần render đầu phải giống HTML đó
-  const forceMotion = useSyncExternalStore(subscribeNothing, readForceMotion, () => false)
-  const systemReduced = useSyncExternalStore(subscribeReducedMotion, readReducedMotion, () => false)
-  const reducedMotion = systemReduced && !forceMotion
   const audioRef = useRef<HTMLAudioElement>(null)
 
   // Khoá cuộn trang khi phong bì đang che
@@ -112,8 +86,8 @@ export function InvitationShell({
     window.scrollTo(0, 0)
     setPhase('opening')
     playMusic()
-    window.setTimeout(() => setPhase('open'), reducedMotion ? 0 : openDuration)
-  }, [phase, playMusic, openDuration, reducedMotion])
+    window.setTimeout(() => setPhase('open'), openDuration)
+  }, [phase, playMusic, openDuration])
 
   const toggleMusic = useCallback(() => {
     const audio = audioRef.current
@@ -123,21 +97,16 @@ export function InvitationShell({
   }, [playMusic])
 
   const value = useMemo(
-    () => ({ phase, open, hasMusic: Boolean(musicUrl), playing, toggleMusic, reducedMotion }),
-    [phase, open, musicUrl, playing, toggleMusic, reducedMotion],
+    () => ({ phase, open, hasMusic: Boolean(musicUrl), playing, toggleMusic }),
+    [phase, open, musicUrl, playing, toggleMusic],
   )
 
   return (
     <InvitationContext value={value}>
       <LazyMotion features={loadMotionFeatures} strict>
-        <MotionConfig reducedMotion={forceMotion ? 'never' : 'user'}>
-          <SmoothScroll enabled={phase === 'open' && !reducedMotion} />
-          <div
-            data-phase={phase}
-            data-motion={forceMotion ? 'full' : undefined}
-            className={cn('group/inv relative', className)}
-            style={style}
-          >
+        <MotionConfig reducedMotion="never">
+          <SmoothScroll enabled={phase === 'open'} />
+          <div data-phase={phase} className={cn('group/inv relative', className)} style={style}>
             {children}
             {musicUrl && (
               <>
